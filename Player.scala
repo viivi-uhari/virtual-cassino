@@ -2,7 +2,7 @@ import scala.collection.mutable.Buffer
 
 class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffer[Card]) {
 
-  private var currentCard = Card(1, "s")
+  var currentCard = Card(1, "s")
 
   def playCard(card: Card) = currentCard = card
 

@@ -127,6 +127,16 @@ object TestGame extends App {
   println("players' names: " + game3.players.map( _.name ))
   println("turn: " + game3.currentPlayer.name)
 
+  println("\n\nTesting the check method\n\n")
+
+  println(game.check(Card(11, "s"), Vector(Card(5, "c"), Card(10, "h"), Card(6, "d"), Card(11, "c"), Card(1, "s"))))
+  println(game.check(Card(12, "h"), Vector(Card(11, "h"), Card(6, "d"), Card(5, "c"), Card(1, "s"))))
+  println(game.check(Card(12, "h"), Vector(Card(13, "h"), Card(6, "d"), Card(5, "c"), Card(1, "s"))))
+  println(game.check(Card(1, "h"), Vector(Card(13, "h"), Card(6, "d"), Card(8, "c"), Card(1, "s"))))
+  println(game.check(Card(2, "s"), Vector(Card(13, "h"), Card(7, "d"), Card(8, "c"), Card(2, "s"))))
+  println(game.check(Card(8, "s"), Vector(Card(2, "h"), Card(3, "d"), Card(3, "c"), Card(8, "s"))))
+  println(game.check(Card(8, "s"), Vector(Card(2, "h"), Card(3, "d"), Card(3, "c"), Card(9, "s"))))
+
 
 
 
