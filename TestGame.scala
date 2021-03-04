@@ -12,6 +12,7 @@ object TestGame extends App {
 
 
   val game = new Game(Buffer(player1, player2), table, deck)
+  game.currentPlayer = player1
 
 
   println("deck cards: " + deck.cards)
@@ -21,6 +22,7 @@ object TestGame extends App {
   println("player2 handcards: " + player2.handCards)
   println("player2 pilecards: " + player2.pileCards)
   println("players' names: " + game.players.map( _.name ))
+  println("turn: " + game.currentPlayer.name)
 
   game.playTurn("play 5h")
 
@@ -33,6 +35,7 @@ object TestGame extends App {
   println("player2 handcards: " + player2.handCards)
   println("player2 pilecards: " + player2.pileCards)
   println("players' names: " + game.players.map( _.name ))
+  println("turn: " + game.currentPlayer.name)
 
   game.playTurn("take 5d")
   println("\n\nAfter take 5d\n\n")
@@ -44,6 +47,32 @@ object TestGame extends App {
   println("player2 handcards: " + player2.handCards)
   println("player2 pilecards: " + player2.pileCards)
   println("players' names: " + game.players.map( _.name ))
+  println("turn: " + game.currentPlayer.name)
+
+  game.playTurn("play 6s")
+  println("\n\nAfter play 6s\n\n")
+
+  println("deck cards: " + deck.cards)
+  println("table cards: " + table.cards)
+  println("player1 handcards: " + player1.handCards)
+  println("player1 pilecards: " + player1.pileCards)
+  println("player2 handcards: " + player2.handCards)
+  println("player2 pilecards: " + player2.pileCards)
+  println("players' names: " + game.players.map( _.name ))
+  println("turn: " + game.currentPlayer.name)
+
+  game.playTurn("take 6c")
+  println("\n\nAfter take 6c\n\n")
+
+  println("deck cards: " + deck.cards)
+  println("table cards: " + table.cards)
+  println("player1 handcards: " + player1.handCards)
+  println("player1 pilecards: " + player1.pileCards)
+  println("player2 handcards: " + player2.handCards)
+  println("player2 pilecards: " + player2.pileCards)
+  println("players' names: " + game.players.map( _.name ))
+  println("turn: " + game.currentPlayer.name)
+
 
   game.playTurn("end")
 
@@ -96,6 +125,7 @@ object TestGame extends App {
   game3.playTurn("players 4")
 
   println("players' names: " + game3.players.map( _.name ))
+  println("turn: " + game3.currentPlayer.name)
 
 
 

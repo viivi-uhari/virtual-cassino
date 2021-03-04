@@ -2,7 +2,7 @@ import scala.collection.mutable.Buffer
 
 class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
 
-  private var currentPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
+  var currentPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
 
   var cardsInGame = table.cards ++ deck.cards
 
@@ -14,6 +14,7 @@ class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
         for (n <- 1 to subject.toInt) {
           this.players += new Player("player" + n.toString, Buffer[Card](), Buffer[Card]())
         }
+        this.currentPlayer = players.head
       }
       case "start" => {
         this.deck.restack()
@@ -32,16 +33,23 @@ class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
         this.currentPlayer.takeCards(cards.toVector)
         this.table.removeCards(cards.toVector)
         if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
+        turn()
       }
       case "place" => {
         this.currentPlayer.playCard(Card(subject.head.toString.toInt, subject.tail))
         this.table.addCard(Card(subject.head.toString.toInt, subject.tail))
+        turn()
       }
       case "end" => {
         this.players = this.players.empty
         this.table.cards = this.table.cards.empty
       }
     }
+  }
+
+  private def turn() = {
+    val currentIndex = this.players.indexOf(this.currentPlayer)
+    if (currentIndex < players.size - 1) this.currentPlayer = this.players(currentIndex + 1) else this.currentPlayer = this.players.head
   }
 
 }
