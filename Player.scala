@@ -10,7 +10,7 @@ class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffe
 
   def addCard(card: Card) = this.handCards += card
 
-  def addCards(cards: Vector[Card]) = this.handCards += cards
+  def addCards(cards: Vector[Card]) = this.handCards ++= cards
 
   def takeCards(cards: Vector[Card]) = {
     this.pileCards += currentCard

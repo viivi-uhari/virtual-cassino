@@ -25,7 +25,7 @@ class Deck {
 
   def dealCards = {
     val cards = this.cards.take(4)
-    this.cards -= cards
+    this.cards --= cards
     cards
   }
 

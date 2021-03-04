@@ -46,6 +46,39 @@ object TestGame extends App {
   println("player2 pilecards: " + player2.pileCards)
   println("players' names: " + game.players.map( _.name ))
 
+  val player3 = new Player("player3", Buffer[Card](), Buffer[Card]())
+  val player4 = new Player("player4", Buffer[Card](), Buffer[Card]())
+  val table2 = new Table
+  val deck2 = new Deck
+
+
+  val game2 = new Game(Buffer(player3, player4), table2, deck2)
+
+  println("\n\nNew game\n\n")
+
+  println("deck cards: " + deck2.cards)
+  println("table cards: " + table2.cards)
+  println("player3 handcards: " + player3.handCards)
+  println("player3 pilecards: " + player3.pileCards)
+  println("player4 handcards: " + player4.handCards)
+  println("player4 pilecards: " + player4.pileCards)
+  println("players' names: " + game.players.map( _.name ))
+
+  game2.playTurn("start")
+
+  println("\n\nAfter start\n\n")
+
+  println("deck cards: " + deck2.cards)
+  println("table cards: " + table2.cards)
+  println("player3 handcards: " + player3.handCards)
+  println("player3 pilecards: " + player3.pileCards)
+  println("player4 handcards: " + player4.handCards)
+  println("player4 pilecards: " + player4.pileCards)
+  println("players' names: " + game2.players.map( _.name ))
+
+  //sorting the deck card to better see if the right cards are missing
+  println("deck cards sorted: " + deck2.cards.sortBy( _.number ))
+
 
 
 }

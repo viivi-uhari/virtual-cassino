@@ -6,7 +6,7 @@ class Table {
 
   def addCard(card: Card) = this.cards += card
 
-  def addCards(cards: Vector[Card]) = this.cards += cards
+  def addCards(cards: Vector[Card]) = this.cards ++= cards
 
   def removeCards(cards: Vector[Card]) = {
     for (card <- cards) {
