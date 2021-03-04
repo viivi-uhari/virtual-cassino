@@ -2,7 +2,7 @@ import scala.collection.mutable.Buffer
 
 class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
 
-  private var currentPlayer = players.head
+  private var currentPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
 
   var cardsInGame = table.cards ++ deck.cards
 
@@ -10,6 +10,11 @@ class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
     val act = command.takeWhile( _ != ' ')
     val subject = command.dropWhile( _ != ' ').drop(1)
     act match {
+      case "players" => {
+        for (n <- 1 to subject.toInt) {
+          this.players += new Player("player" + n.toString, Buffer[Card](), Buffer[Card]())
+        }
+      }
       case "start" => {
         this.deck.restack()
         this.deck.shuffle()
@@ -33,9 +38,8 @@ class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
         this.table.addCard(Card(subject.head.toString.toInt, subject.tail))
       }
       case "end" => {
-        this.players.empty
-        this.table.cards.empty
-        this.deck.restack()
+        this.players = this.players.empty
+        this.table.cards = this.table.cards.empty
       }
     }
   }

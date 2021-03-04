@@ -35,7 +35,6 @@ object TestGame extends App {
   println("players' names: " + game.players.map( _.name ))
 
   game.playTurn("take 5d")
-
   println("\n\nAfter take 5d\n\n")
 
   println("deck cards: " + deck.cards)
@@ -46,13 +45,22 @@ object TestGame extends App {
   println("player2 pilecards: " + player2.pileCards)
   println("players' names: " + game.players.map( _.name ))
 
+  game.playTurn("end")
+
+  println("\n\nAfter ending the game\n\n")
+
+  println("deck cards: " + deck.cards)
+  println("table cards: " + table.cards)
+  println("players' names: " + game.players.map( _.name ))
+
+
   val player3 = new Player("player3", Buffer[Card](), Buffer[Card]())
   val player4 = new Player("player4", Buffer[Card](), Buffer[Card]())
   val table2 = new Table
   val deck2 = new Deck
 
 
-  val game2 = new Game(Buffer(player3, player4), table2, deck2)
+  /* val game2 = new Game(Buffer(player3, player4), table2, deck2)
 
   println("\n\nNew game\n\n")
 
@@ -78,6 +86,18 @@ object TestGame extends App {
 
   //sorting the deck card to better see if the right cards are missing
   println("deck cards sorted: " + deck2.cards.sortBy( _.number ))
+
+  */
+
+  val game3 = new Game(Buffer[Player](), table2, deck2)
+
+  println("\n\nNew game, adding 4 players\n\n")
+
+  game3.playTurn("players 4")
+
+  println("players' names: " + game3.players.map( _.name ))
+
+
 
 
 
