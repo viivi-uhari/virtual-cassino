@@ -7,10 +7,26 @@ class Deck {
 
   var cards = Buffer[Card]()
 
-  def removeCard = if (this.cards.nonEmpty) this.cards.drop(1)
+  def removeCard = {
+    val removed = this.cards.head
+    this.cards -= removed
+    removed
+  }
 
   def shuffle() = {
     this.cards = Random.shuffle(this.cards)
+  }
+
+  def removeCards(cards: Vector[Card]) = {
+    for (card <- cards) {
+      this.cards -= card
+    }
+  }
+
+  def dealCards = {
+    val cards = this.cards.take(4)
+    this.cards -= cards
+    cards
   }
 
   def restack() = this.cards = Buffer(

@@ -1,6 +1,7 @@
 
 
-case class Card(number: Int, suit: String) {
+
+case class Card(val number: Int, val suit: String) {
 
   private var onTheTable = false
 

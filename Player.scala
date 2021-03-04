@@ -1,6 +1,6 @@
 import scala.collection.mutable.Buffer
 
-class Player(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) {
+class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffer[Card]) {
 
   private var currentCard = Card(1, "s")
 
@@ -10,12 +10,14 @@ class Player(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) {
 
   def addCard(card: Card) = this.handCards += card
 
+  def addCards(cards: Vector[Card]) = this.handCards += cards
+
   def takeCards(cards: Vector[Card]) = {
     this.pileCards += currentCard
     for (card <- cards) {
       this.pileCards += card
     }
+    this.handCards -= currentCard
   }
-
 
 }
