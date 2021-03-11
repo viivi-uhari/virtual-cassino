@@ -1,0 +1,7 @@
+CASSINO
+PLR14EmmaQh4c2dJs
+CMP12s4h:6s3s2h
+TBL
+TRNplr1
+END
+

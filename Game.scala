@@ -1,3 +1,6 @@
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.Reader
 import scala.collection.mutable.Buffer
 
 class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
@@ -30,7 +33,7 @@ class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
         val cards = for {
           string <- strings
         } yield Card(string.head.toString.toInt, string.tail)
-        if (check(this.currentPlayer.currentCard, cards.toVector)) {
+        if (this.currentPlayer.check(this.currentPlayer.currentCard, cards.toVector)) {
           this.currentPlayer.takeCards(cards.toVector)
           this.table.removeCards(cards.toVector)
           if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
@@ -39,8 +42,9 @@ class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
         }
       }
       case "place" => {
-        this.currentPlayer.playCard(Card(subject.head.toString.toInt, subject.tail))
-        this.table.addCard(Card(subject.head.toString.toInt, subject.tail))
+        val card = Card(subject.head.toString.toInt, subject.tail)
+        this.currentPlayer.playCard(card)
+        this.table.addCard(card)
         turn()
       }
       case "end" => {
@@ -55,41 +59,9 @@ class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
     if (currentIndex < players.size - 1) this.currentPlayer = this.players(currentIndex + 1) else this.currentPlayer = this.players.head
   }
 
-  def check(playedCard: Card, wantedCards: Vector[Card]) = {
-    var result = true
-    var wantedNumbers = wantedCards.map( _.number ).toBuffer
-    for (n <- wantedNumbers) {
-      if (n > playedCard.handNumber) {
-        result = false
-      } else if (n == playedCard.handNumber) {
-        wantedNumbers -= n
-      }
-    }
 
-    if (result) {
-      var originalList = wantedNumbers
-      while (wantedNumbers.nonEmpty && result) {
-        val sum = wantedNumbers.head + wantedNumbers(1)
-        if (sum == playedCard.handNumber) {
-          wantedNumbers --= wantedNumbers.take(2)
-          originalList = wantedNumbers
-        } else if (sum < playedCard.handNumber) {
-          if (wantedNumbers.size > 2) {
-            wantedNumbers --= wantedNumbers.take(2)
-            wantedNumbers = sum +: wantedNumbers
-            originalList = wantedNumbers
-          } else {
-            result = false
-          }
-        } else {
-          val second = wantedNumbers(1)
-          wantedNumbers = wantedNumbers.head +: wantedNumbers.drop(2)
-          wantedNumbers += second
-          if (wantedNumbers == originalList) result = false
-        }
-      }
-    }
-    result
-  }
+
+
+
 
 }
