@@ -11,7 +11,10 @@ object TestGame extends App {
   deck.removeCards((player1.handCards ++ player2.handCards ++ table.cards).toVector)
 
 
-  val game = new Game(Buffer(player1, player2), table, deck)
+  val game = new Game
+  game.players = Buffer(player1, player2)
+  game.table = this.table
+  game.deck = this.deck
   game.currentPlayer = player1
 
 
@@ -118,7 +121,9 @@ object TestGame extends App {
 
   */
 
-  val game3 = new Game(Buffer[Player](), table2, deck2)
+  val game3 = new Game
+  game.table = this.table2
+  game.deck = this.deck2
 
   println("\n\nNew game, adding 4 players\n\n")
 

@@ -3,7 +3,11 @@ import java.io.IOException
 import java.io.Reader
 import scala.collection.mutable.Buffer
 
-class Game(var players: Buffer[Player], val table: Table, val deck: Deck) {
+class Game {
+
+  var players: Buffer[Player] = Buffer[Player]()
+  var table = new Table
+  var deck = new Deck
 
   var currentPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
 

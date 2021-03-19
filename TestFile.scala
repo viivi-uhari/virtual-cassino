@@ -89,7 +89,10 @@ object TestFile extends App{
       deck.removeCards(table.cards.toVector ++ allHandCrads ++ allPileCrads)
       deck.shuffle()
 
-      val game = new Game(players.values.toBuffer, table, deck)
+      val game = new Game
+      game.players = players.values.toBuffer
+      game.table = table
+      game.deck = deck
       game.currentPlayer = currentPlayer
       game
 
