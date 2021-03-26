@@ -1,5 +1,4 @@
-
-
+package os2.cassino
 
 case class Card(val number: Int, val suit: String) {
 

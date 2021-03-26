@@ -1,17 +1,12 @@
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.Reader
+package os2.cassino
+
 import scala.collection.mutable.Buffer
 
-class Game {
-
-  var players: Buffer[Player] = Buffer[Player]()
-  var table = new Table
-  var deck = new Deck
+class Game(var players: Buffer[Player], val table: OwnTable, val deck: Deck) {
 
   var currentPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
 
-  var cardsInGame = table.cards ++ deck.cards
+  var cardsInGame = this.table.cards ++ deck.cards
 
   def playTurn(command: String) = {
     val act = command.takeWhile( _ != ' ')
@@ -19,7 +14,7 @@ class Game {
     act match {
       case "players" => {
         for (n <- 1 to subject.toInt) {
-          this.players += new Player("player" + n.toString, Buffer[Card](), Buffer[Card]())
+          this.players += new Player("os2.cassino.Player " + n.toString, Buffer[Card](), Buffer[Card]())
         }
         this.currentPlayer = players.head
       }
@@ -31,12 +26,13 @@ class Game {
         }
         table.addCards(this.deck.dealCards.toVector)
       }
-      case "play" => this.currentPlayer.playCard(Card(subject.head.toString.toInt, subject.tail))
+      case "play" => this.currentPlayer.playCard(subjectToCard(subject))
       case "take" => {
         val strings = subject.split(", ")
         val cards = for {
           string <- strings
-        } yield Card(string.head.toString.toInt, string.tail)
+        } yield subjectToCard(string)
+
         if (this.currentPlayer.check(this.currentPlayer.currentCard, cards.toVector)) {
           this.currentPlayer.takeCards(cards.toVector)
           this.table.removeCards(cards.toVector)
@@ -46,9 +42,8 @@ class Game {
         }
       }
       case "place" => {
-        val card = Card(subject.head.toString.toInt, subject.tail)
-        this.currentPlayer.playCard(card)
-        this.table.addCard(card)
+        this.currentPlayer.placeCard(subjectToCard(subject))
+        this.table.addCard(subjectToCard(subject))
         turn()
       }
       case "end" => {
@@ -56,6 +51,24 @@ class Game {
         this.table.cards = this.table.cards.empty
       }
     }
+  }
+
+  private def subjectToCard(subject: String) = {
+    var card = this.currentPlayer.currentCard
+    var second = subject(1)
+    val end = subject(subject.length - 1).toString
+    subject.head match {
+      case 'Q' => card = Card(12, end)
+      case 'K' => card = Card(13, end)
+      case 'J' => card = Card(11, end)
+      case 'A' => card = Card(1, end)
+      case '1' if (second == '0') => card = Card(10, end)
+      case '1' if (second == '1') => card = Card(11, end)
+      case '1' if (second == '2') => card = Card(12, end)
+      case '1' if (second == '3') => card = Card(13, end)
+      case a: Char => card = Card(a.toString.toInt, end)
+    }
+    card
   }
 
   private def turn() = {

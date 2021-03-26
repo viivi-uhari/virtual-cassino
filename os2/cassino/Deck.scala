@@ -1,3 +1,5 @@
+package os2.cassino
+
 
 import scala.collection.mutable.Buffer
 import scala.util.Random

@@ -1,20 +1,19 @@
+package os2.cassino
+
 import scala.collection.mutable.Buffer
 
 object TestGame extends App {
 
   val player1 = new Player("player1", Buffer(Card(2, "s"), Card(3, "d"), Card(5, "h")), Buffer[Card]())
   val player2 = new Player("player2", Buffer(Card(6, "s"), Card(11, "d"), Card(8, "h")), Buffer[Card]())
-  val table = new Table
+  val table = new OwnTable
   table.cards = (Buffer(Card(6, "c"), Card(5, "d"), Card(7, "h")))
   val deck = new Deck
   deck.restack()
   deck.removeCards((player1.handCards ++ player2.handCards ++ table.cards).toVector)
 
 
-  val game = new Game
-  game.players = Buffer(player1, player2)
-  game.table = this.table
-  game.deck = this.deck
+  val game = new Game(Buffer(player1, player2), this.table, this.deck)
   game.currentPlayer = player1
 
 
@@ -24,12 +23,13 @@ object TestGame extends App {
   println("player1 pilecards: " + player1.pileCards)
   println("player2 handcards: " + player2.handCards)
   println("player2 pilecards: " + player2.pileCards)
-  println("players' names: " + game.players.map( _.name ))
+  println("players' names: " + game.players.map(_.name))
   println("turn: " + game.currentPlayer.name)
 
-  game.playTurn("play 5h")
 
-  println("\n\nAfter play 5h\n\n")
+  game.playTurn("place 5h")
+
+  println("\n\nAfter place 5h\n\n")
 
   println("deck cards: " + deck.cards)
   println("table cards: " + table.cards)
@@ -37,10 +37,10 @@ object TestGame extends App {
   println("player1 pilecards: " + player1.pileCards)
   println("player2 handcards: " + player2.handCards)
   println("player2 pilecards: " + player2.pileCards)
-  println("players' names: " + game.players.map( _.name ))
+  println("players' names: " + game.players.map(_.name))
   println("turn: " + game.currentPlayer.name)
 
-  game.playTurn("take 5d")
+  /*game.playTurn("take 5d")
   println("\n\nAfter take 5d\n\n")
 
   println("deck cards: " + deck.cards)
@@ -50,22 +50,10 @@ object TestGame extends App {
   println("player2 handcards: " + player2.handCards)
   println("player2 pilecards: " + player2.pileCards)
   println("players' names: " + game.players.map( _.name ))
-  println("turn: " + game.currentPlayer.name)
+  println("turn: " + game.currentPlayer.name)*/
 
-  game.playTurn("play 6s")
-  println("\n\nAfter play 6s\n\n")
-
-  println("deck cards: " + deck.cards)
-  println("table cards: " + table.cards)
-  println("player1 handcards: " + player1.handCards)
-  println("player1 pilecards: " + player1.pileCards)
-  println("player2 handcards: " + player2.handCards)
-  println("player2 pilecards: " + player2.pileCards)
-  println("players' names: " + game.players.map( _.name ))
-  println("turn: " + game.currentPlayer.name)
-
-  game.playTurn("take 6c")
-  println("\n\nAfter take 6c\n\n")
+  game.playTurn("play 11d")
+  println("\n\nAfter play 11d\n\n")
 
   println("deck cards: " + deck.cards)
   println("table cards: " + table.cards)
@@ -73,7 +61,19 @@ object TestGame extends App {
   println("player1 pilecards: " + player1.pileCards)
   println("player2 handcards: " + player2.handCards)
   println("player2 pilecards: " + player2.pileCards)
-  println("players' names: " + game.players.map( _.name ))
+  println("players' names: " + game.players.map(_.name))
+  println("turn: " + game.currentPlayer.name)
+
+  game.playTurn("take 6c, 5d")
+  println("\n\nAfter take 6c, 5d\n\n")
+
+  println("deck cards: " + deck.cards)
+  println("table cards: " + table.cards)
+  println("player1 handcards: " + player1.handCards)
+  println("player1 pilecards: " + player1.pileCards)
+  println("player2 handcards: " + player2.handCards)
+  println("player2 pilecards: " + player2.pileCards)
+  println("players' names: " + game.players.map(_.name))
   println("turn: " + game.currentPlayer.name)
 
 
@@ -83,16 +83,20 @@ object TestGame extends App {
 
   println("deck cards: " + deck.cards)
   println("table cards: " + table.cards)
-  println("players' names: " + game.players.map( _.name ))
+  println("players' names: " + game.players.map(_.name))
 
 
-  val player3 = new Player("player3", Buffer[Card](), Buffer[Card]())
-  val player4 = new Player("player4", Buffer[Card](), Buffer[Card]())
-  val table2 = new Table
-  val deck2 = new Deck
+  /*
+  val game2 = new os2.cassino.Game
 
+  val player3 = new os2.cassino.Player("player3", Buffer[os2.cassino.Card](), Buffer[os2.cassino.Card]())
+  val player4 = new os2.cassino.Player("player4", Buffer[os2.cassino.Card](), Buffer[os2.cassino.Card]())
+  val table2 = new os2.cassino.OwnTable
+  val deck2 = new os2.cassino.Deck
 
-  /* val game2 = new Game(Buffer(player3, player4), table2, deck2)
+  game2.table = table2
+  game2.deck = deck2
+  game2.players = Buffer(player3, player4)
 
   println("\n\nNew game\n\n")
 
@@ -102,7 +106,7 @@ object TestGame extends App {
   println("player3 pilecards: " + player3.pileCards)
   println("player4 handcards: " + player4.handCards)
   println("player4 pilecards: " + player4.pileCards)
-  println("players' names: " + game.players.map( _.name ))
+  println("players' names: " + game2.players.map( _.name ))
 
   game2.playTurn("start")
 
@@ -121,29 +125,50 @@ object TestGame extends App {
 
   */
 
-  val game3 = new Game
-  game.table = this.table2
-  game.deck = this.deck2
+
+  val table3 = new OwnTable
+  val deck3 = new Deck
+
+  val game3 = new Game(Buffer[Player](), this.table3, this.deck3)
 
   println("\n\nNew game, adding 4 players\n\n")
 
   game3.playTurn("players 4")
 
-  println("players' names: " + game3.players.map( _.name ))
+  println("players' names: " + game3.players.map(_.name))
   println("turn: " + game3.currentPlayer.name)
 
+  game3.playTurn("start")
+
+  println("\n\nAfter start\n\n")
+
+  println("deck cards: " + deck3.cards)
+  println("table cards: " + table3.cards)
+  println("player1 handcards: " + game3.players.head.handCards)
+  println("player1 pilecards: " + game3.players.head.pileCards)
+  println("player2 handcards: " + game3.players(1).handCards)
+  println("player2 pilecards: " + game3.players(1).pileCards)
+  println("player3 handcards: " + game3.players(2).handCards)
+  println("player3 pilecards: " + game3.players(2).pileCards)
+  println("player4 handcards: " + game3.players(3).handCards)
+  println("player4 pilecards: " + game3.players(3).pileCards)
+  println("players' names: " + game3.players.map(_.name))
+
+  //sorting the deck card to better see if the right cards are missing
+  println("deck cards sorted: " + deck3.cards.sortBy(_.number))
+
+
+  /*
   println("\n\nTesting the check method\n\n")
 
-  println(player1.check(Card(11, "s"), Vector(Card(5, "c"), Card(10, "h"), Card(6, "d"), Card(11, "c"), Card(1, "s"))))
-  println(player1.check(Card(12, "h"), Vector(Card(11, "h"), Card(6, "d"), Card(5, "c"), Card(1, "s"))))
-  println(player1.check(Card(12, "h"), Vector(Card(13, "h"), Card(6, "d"), Card(5, "c"), Card(1, "s"))))
-  println(player1.check(Card(1, "h"), Vector(Card(13, "h"), Card(6, "d"), Card(8, "c"), Card(1, "s"))))
-  println(player1.check(Card(2, "s"), Vector(Card(13, "h"), Card(7, "d"), Card(8, "c"), Card(2, "s"))))
-  println(player1.check(Card(8, "s"), Vector(Card(2, "h"), Card(3, "d"), Card(3, "c"), Card(8, "s"))))
-  println(player1.check(Card(8, "s"), Vector(Card(2, "h"), Card(3, "d"), Card(3, "c"), Card(9, "s"))))
-
-
-
+  println(player1.check(os2.cassino.Card(11, "s"), Vector(os2.cassino.Card(5, "c"), os2.cassino.Card(10, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(11, "c"), os2.cassino.Card(1, "s"))))
+  println(player1.check(os2.cassino.Card(12, "h"), Vector(os2.cassino.Card(11, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(5, "c"), os2.cassino.Card(1, "s"))))
+  println(player1.check(os2.cassino.Card(12, "h"), Vector(os2.cassino.Card(13, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(5, "c"), os2.cassino.Card(1, "s"))))
+  println(player1.check(os2.cassino.Card(1, "h"), Vector(os2.cassino.Card(13, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(8, "c"), os2.cassino.Card(1, "s"))))
+  println(player1.check(os2.cassino.Card(2, "s"), Vector(os2.cassino.Card(13, "h"), os2.cassino.Card(7, "d"), os2.cassino.Card(8, "c"), os2.cassino.Card(2, "s"))))
+  println(player1.check(os2.cassino.Card(8, "s"), Vector(os2.cassino.Card(2, "h"), os2.cassino.Card(3, "d"), os2.cassino.Card(3, "c"), os2.cassino.Card(8, "s"))))
+  println(player1.check(os2.cassino.Card(8, "s"), Vector(os2.cassino.Card(2, "h"), os2.cassino.Card(3, "d"), os2.cassino.Card(3, "c"), os2.cassino.Card(9, "s"))))
+  */
 
 
 }

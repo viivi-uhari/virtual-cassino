@@ -1,6 +1,8 @@
+package os2.cassino
+
 import scala.collection.mutable.Buffer
 
-class Table {
+class OwnTable {
 
   var cards = Buffer[Card]()
 

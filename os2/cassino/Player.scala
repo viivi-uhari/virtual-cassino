@@ -1,3 +1,5 @@
+package os2.cassino
+
 import scala.collection.mutable.Buffer
 
 class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffer[Card]) {

@@ -1,11 +1,13 @@
-import java.io.{BufferedReader, FileReader, IOException, Reader, StringReader}
+package os2.cassino
+
+import java.io.{BufferedReader, FileReader, IOException, Reader}
 import scala.collection.mutable.Buffer
 
-object TestFile extends App{
+object TestFile extends App {
 
   val input = new FileReader("/Users/viiviuhari/IdeaProjects/OS2-Project/exampleFile.txt")
 
-  // now load returns a Game, could also modify an excisting Game
+  // now load returns a os2.cassino.Game, could also modify an excisting os2.cassino.Game
 
   def load(input: Reader): Game = {
 
@@ -47,7 +49,7 @@ object TestFile extends App{
       }
 
       var players = Map[Int, Player]()
-      var table = new Table
+      var table = new OwnTable
       var currentPlayer = new Player("", Buffer[Card](), Buffer[Card]())
 
       currentLine = lineReader.readLine()
@@ -60,8 +62,8 @@ object TestFile extends App{
               val nameSize = currentLine(4).toString.toInt
               val playerName = currentLine.slice(5, nameSize + 5)
               val cards = currentLine.drop(5 + nameSize)
-              val handChars = cards.takeWhile( _ != ':' )
-              val pileChars = cards.dropWhile( _ != ':' ).drop(1)
+              val handChars = cards.takeWhile(_ != ':')
+              val pileChars = cards.dropWhile(_ != ':').drop(1)
 
               players += playerNumber -> new Player(playerName, handleCards(handChars), handleCards(pileChars))
               currentLine = lineReader.readLine()
@@ -84,36 +86,31 @@ object TestFile extends App{
 
       val deck = new Deck
       deck.restack()
-      val allHandCrads = players.values.flatMap( _.handCards )
-      val allPileCrads = players.values.flatMap( _.pileCards )
+      val allHandCrads = players.values.flatMap(_.handCards)
+      val allPileCrads = players.values.flatMap(_.pileCards)
       deck.removeCards(table.cards.toVector ++ allHandCrads ++ allPileCrads)
       deck.shuffle()
 
-      val game = new Game
-      game.players = players.values.toBuffer
-      game.table = table
-      game.deck = deck
+      val game = new Game(players.values.toBuffer, table, deck)
       game.currentPlayer = currentPlayer
       game
 
     } catch { // better exception handeling
       case e: IOException =>
         throw e
-        // println("Reading finished with error")
+      // println("Reading finished with error")
     }
 
   }
 
 
   val game = load(input)
-  println(game.players.map( _.name ))
-  println(game.players.map( _.handCards ))
-  println(game.players.map( _.pileCards ))
+  println(game.players.map(_.name))
+  println(game.players.map(_.handCards))
+  println(game.players.map(_.pileCards))
   println(game.table.cards)
   println(game.deck.cards)
   println(game.currentPlayer.name)
-
-
 
 
 }
