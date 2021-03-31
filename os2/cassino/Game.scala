@@ -14,7 +14,7 @@ class Game(var players: Buffer[Player], val table: OwnTable, val deck: Deck) {
     act match {
       case "players" => {
         for (n <- 1 to subject.toInt) {
-          this.players += new Player("os2.cassino.Player " + n.toString, Buffer[Card](), Buffer[Card]())
+          this.players += new Player("Player " + n.toString, Buffer[Card](), Buffer[Card]())
         }
         this.currentPlayer = players.head
       }
@@ -41,9 +41,9 @@ class Game(var players: Buffer[Player], val table: OwnTable, val deck: Deck) {
           // else feedback
         }
       }
-      case "place" => {
-        this.currentPlayer.placeCard(subjectToCard(subject))
-        this.table.addCard(subjectToCard(subject))
+      case "place" => { //place command just places the current card
+        this.currentPlayer.placeCard(currentPlayer.currentCard)
+        this.table.addCard(currentPlayer.currentCard)
         turn()
       }
       case "end" => {

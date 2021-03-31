@@ -7,3 +7,11 @@ I have also implemented the check method and tested the classes mentioned in the
 I have also started the implementation of the load method in its own TestFile class for now. I wanted to start working on the user interface
 a bit earlier before the file handling methods but I had some trouble getting the Scala Swing library working. Now it's working and I've been testing it out.
 All in all I've used about 12 hours so far on my project.
+
+Report 2
+18.-31.3.:
+
+Now I have started the implementation of my GUI and done some finetuning to the Game class. For example I implemented a
+command handling method subjectToCard that turns the card-strings into Cards. The GUI is coming along nicely and
+I'm hoping to get it working during the next two weeks. I'd also like to get the file handling methods working during the next two weeks.
+My plan has changed a little from the initial one and now I'm trying to get the GUI class working before starting on the computer opponent.
