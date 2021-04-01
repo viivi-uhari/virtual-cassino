@@ -191,21 +191,7 @@ object GUI extends SimpleSwingApplication {
   var cardPanelPairs = currentPanel._1.zip(currentPanel._2)
 
 
-  def draw() = {
-
-    for (card <- table.cards) {
-      tableCards.contents += frontCard(card)
-
-    }
-    if (game.deck.cards.nonEmpty) deckButtons.contents += deckPic else deckButtons.contents += empty
-    val turn = new Label("It's " + this.game.currentPlayer.name + "'s turn.") {
-      minimumSize = new Dimension(240, 40)
-      preferredSize = new Dimension(240, 40)
-      maximumSize = new Dimension(240, 40)
-    }
-    center.contents += turn
-    center.contents += deckButtons
-    center.contents += tableCards
+  def setUp() = {
 
     for (i <- game.players.indices) {
       val fourCards = new GridPanel(1, 4) {
@@ -227,6 +213,19 @@ object GUI extends SimpleSwingApplication {
       box.contents += name
       if (i % 2 == 0) right.contents += box else left.contents += box
     }
+
+    for (card <- table.cards) {
+      tableCards.contents += frontCard(card)
+    }
+    if (game.deck.cards.nonEmpty) deckButtons.contents += deckPic else deckButtons.contents += empty
+    val turn = new Label("It's " + this.game.currentPlayer.name + "'s turn.") {
+      minimumSize = new Dimension(240, 40)
+      preferredSize = new Dimension(240, 40)
+      maximumSize = new Dimension(240, 40)
+    }
+    center.contents += turn
+    center.contents += deckButtons
+    center.contents += tableCards
 
     //getting the GUI to listen to the players' cards
     val rightCardsPanels = right.contents.map(_.asInstanceOf[BoxPanel].contents.head.asInstanceOf[GridPanel].contents)
@@ -264,6 +263,21 @@ object GUI extends SimpleSwingApplication {
 
   }
 
+  def draw() = {
+
+    for (i <- playerPanels.indices) {
+      if (game.players(i) == game.currentPlayer) {
+        println(game.players(i).name)
+        println(game.currentPlayer.name)
+        for (a <- game.players(i).handCards.indices) {
+          playerPanels(i)._2(a) = frontCard(game.players(i).handCards(a))
+          playerPanels(i)._2(a).repaint()
+        }
+      }
+    }
+
+  }
+
   
 
 
@@ -280,7 +294,7 @@ object GUI extends SimpleSwingApplication {
     }
     case clicked: ButtonClicked if (clicked.source == startButton) => {
       game.playTurn("start")
-      draw()
+      setUp()
       window.contents = play
       //println(playerPanels.map( _._1.name ))
       //println(playerPanels.map( _._1.handCards ))
@@ -288,7 +302,16 @@ object GUI extends SimpleSwingApplication {
       println(tablePanels.map(_._1))
     }
     case clicked: ButtonClicked if (clicked.source == confirmButton) => {
-      if (toTake.nonEmpty) game.playTurn("take" + toTake.dropRight(1)) else game.playTurn("place")
+      if (toTake.nonEmpty) {
+        game.playTurn("take" + toTake.dropRight(1))
+      } else {
+        game.playTurn("place")
+        draw()
+        left.repaint()
+        println(playerPanels(1)._2)
+        println(game.table.cards)
+        println(game.currentPlayer.name)
+      }
       println(game.players.map( _.pileCards ))
       println(game.players.map( _.handCards ))
     }
