@@ -33,8 +33,16 @@ object GUI extends SimpleSwingApplication {
   val startButton = new Button("start")
   val sourceField = new TextField
   val sourceField2 = new TextField
-  val outPut = new TextArea("filler.", 30, 100)
+  val outPut = new TextArea("", 30, 100)
   outPut.editable = false
+
+  val saveField = new TextField
+  val saveEndButton = new Button("save")
+  val playButton = new Button("Play again")
+  val endOutPut = new TextArea("", 30, 100)
+  endOutPut.editable = false
+  //val feedback = new TextArea("", 30, 10)
+  //feedback.editable = false
 
   val start = new BoxPanel(Orientation.Vertical) {
 
@@ -56,8 +64,17 @@ object GUI extends SimpleSwingApplication {
 
   }
 
+  val end = new BoxPanel(Orientation.Vertical) {
+    contents += new Label("Game Ended")
+    contents += endOutPut
+    contents += new Label("The file's name you want the game to be saved to:")
+    contents += saveField
+    contents += saveEndButton
+    contents += playButton
+  }
 
-  val tableCards = new GridPanel(6, 4) {
+
+  val tableCards = new GridPanel(5, 4) {
     background = green
   }
 
@@ -70,8 +87,14 @@ object GUI extends SimpleSwingApplication {
       g.fillRect(x, y, cardWidth, cardHeight)
     }
   }
-  val empty = new Panel {
-    background = green
+  def empty = {
+    val emptyCardPanel = new Panel {
+      override def paintComponent(g: Graphics2D) = {
+        g.setColor(green)
+        g.fillRect(x, y, cardWidth, cardHeight)
+      }
+    }
+    emptyCardPanel
   }
 
   val confirmButton = new Button("Confirm")
@@ -112,12 +135,32 @@ object GUI extends SimpleSwingApplication {
     contents += left
   }
 
-
-  var playersNro = "nothing"
-
   val deck = new Deck
   val table = new OwnTable
   val game = new Game(Buffer[Player](), this.table, this.deck)
+  var toTake = ""
+
+  val turn = new Label("It's " + this.game.currentPlayer.name + "'s turn.") {
+    minimumSize = new Dimension(240, 40)
+    preferredSize = new Dimension(240, 40)
+    maximumSize = new Dimension(240, 40)
+  }
+  val take = new Label("Taking: ") {
+    minimumSize = new Dimension(240, 40)
+    preferredSize = new Dimension(240, 40)
+    maximumSize = new Dimension(240, 40)
+  }
+  val current = new Label("Playing: ") {
+    minimumSize = new Dimension(240, 40)
+    preferredSize = new Dimension(240, 40)
+    maximumSize = new Dimension(240, 40)
+  }
+  val valid = new Label("Valid move?") {
+    minimumSize = new Dimension(240, 40)
+    preferredSize = new Dimension(240, 40)
+    maximumSize = new Dimension(240, 40)
+  }
+
 
   val x = 3
   val y = 5
@@ -188,7 +231,9 @@ object GUI extends SimpleSwingApplication {
   var playerPanels = Buffer[(Player, Buffer[Component])]()
   var tablePanels = Buffer[(Card, Component)]()
   var currentPanel: (Buffer[Card], Buffer[Component]) = (Buffer(Card(1, "s")), Buffer(frontCard(Card(1, "s"))))
+  var previousPanel: (Buffer[Card], Buffer[Component]) = (Buffer(Card(1, "s")), Buffer(frontCard(Card(1, "s"))))
   var cardPanelPairs = currentPanel._1.zip(currentPanel._2)
+  var cardPanelPairs2 = previousPanel._1.zip(previousPanel._2)
 
 
   def setUp() = {
@@ -217,17 +262,15 @@ object GUI extends SimpleSwingApplication {
     for (card <- table.cards) {
       tableCards.contents += frontCard(card)
     }
-    if (game.deck.cards.nonEmpty) deckButtons.contents += deckPic else deckButtons.contents += empty
-    val turn = new Label("It's " + this.game.currentPlayer.name + "'s turn.") {
-      minimumSize = new Dimension(240, 40)
-      preferredSize = new Dimension(240, 40)
-      maximumSize = new Dimension(240, 40)
-    }
+    if (game.deck.cards.nonEmpty) deckButtons.contents += deckPic
+    this.turn.text = "It's " + this.game.currentPlayer.name + "'s turn."
     center.contents += turn
+    center.contents += valid
+    center.contents += take
+    center.contents += current
     center.contents += deckButtons
     center.contents += tableCards
 
-    //getting the GUI to listen to the players' cards
     val rightCardsPanels = right.contents.map(_.asInstanceOf[BoxPanel].contents.head.asInstanceOf[GridPanel].contents)
     val leftCardsPanels = left.contents.map(_.asInstanceOf[BoxPanel].contents.head.asInstanceOf[GridPanel].contents)
 
@@ -236,13 +279,8 @@ object GUI extends SimpleSwingApplication {
       cardPanels = cardPanels :+ rightCardsPanels(i)
       if (i < leftCardsPanels.size) cardPanels = cardPanels :+ leftCardsPanels(i)
     }
-    val allCards = for {
-      i <- cardPanels.indices
-      cardPanel <- cardPanels(i)
-    } yield cardPanel
-    allCards.foreach(n => this.listenTo(n.mouse.clicks))
 
-    //matching the currentPlayer's cards with their swing components   !!!!
+    //matching the currentPlayer's cards with their swing components
     playerPanels.clear()
     for (i <- cardPanels.indices) {
       playerPanels += ((game.players(i), cardPanels(i)))
@@ -253,6 +291,7 @@ object GUI extends SimpleSwingApplication {
       }
     }
     cardPanelPairs = currentPanel._1.zip(currentPanel._2)
+    currentPanel._2.foreach(n => this.listenTo(n.mouse.clicks))  //only needs to listen to the current cards
 
     //getting the GUI to listen to the table's cards
     tableCards.contents.foreach(n => this.listenTo(n.mouse.clicks))
@@ -263,65 +302,183 @@ object GUI extends SimpleSwingApplication {
 
   }
 
+
+
   def draw() = {
 
+    println(game.previousPlayer.name)
+    println(game.currentPlayer.name)
+
+    // handling the players' cards
     for (i <- playerPanels.indices) {
       if (game.players(i) == game.currentPlayer) {
-        println(game.players(i).name)
-        println(game.currentPlayer.name)
-        for (a <- game.players(i).handCards.indices) {
-          playerPanels(i)._2(a) = frontCard(game.players(i).handCards(a))
-          playerPanels(i)._2(a).repaint()
+        for (n <- game.players(i).handCards.indices) {
+          playerPanels(i)._2(n) = frontCard(game.players(i).handCards(n))
+          this.listenTo(playerPanels(i)._2(n))
+        }
+      } else if (game.players(i) == game.previousPlayer) {
+        var n = 0
+        while(n < game.players(i).handCards.size) {
+          playerPanels(i)._2(n) = backCard
+          n += 1
+        }
+        while(n < playerPanels(i)._2.size) {
+          playerPanels(i)._2(n) = empty
+          n += 1
         }
       }
     }
 
+    for (i <- playerPanels.indices) {
+      if (playerPanels(i)._1 == game.currentPlayer) {
+        currentPanel = (playerPanels(i)._1.handCards, playerPanels(i)._2)
+      }
+    }
+    cardPanelPairs = currentPanel._1.zip(currentPanel._2)        //doesn't listen to the old cards anymore, only has as many pairs as hand cards
+    currentPanel._2.foreach(n => this.listenTo(n.mouse.clicks))  //only needs to listen to the current cards
+
+    //handling the table's cards
+    tableCards.contents.clear()
+    for (card <- table.cards) {
+      tableCards.contents += frontCard(card)
+    }
+
+    //setting up the center's elements
+    center.contents.clear()
+    center.validate()
+    center.repaint()
+    if (game.deck.cards.nonEmpty) deckButtons.contents += deckPic // weird, doesn't work
+    turn.text = "It's " + this.game.currentPlayer.name + "'s turn."
+    take.text = "Taking: "
+    current.text = "Using: "
+    center.contents += turn
+    center.contents += valid
+    center.contents += take
+    center.contents += current
+    center.contents += deckButtons
+    center.contents += tableCards
+
+    top.validate()
+    top.repaint()
+
+    //getting the GUI to listen to the table's cards                    //for some reason cards expand to the sides
+    tableCards.contents.foreach(n => this.listenTo(n.mouse.clicks))
+    //matching the table's cards with their swing components
+    tablePanels.clear()
+    tablePanels = tableCards.contents.indices.map( i => (game.table.cards(i), tableCards.contents(i)) ).toBuffer
   }
 
-  
+  def updateTake() = {
+    this.take.text = "Taking: " + toTake
+    center.contents(2) = this.take
+    top.validate()
+    top.repaint()
+  }
+  def updateCurrent() = {
+    this.current.text = "Playing: " + numberString(this.game.currentPlayer.currentCard.number) + this.game.currentPlayer.currentCard.suit
+    center.contents(3) = this.current
+    top.validate()
+    top.repaint()
+  }
+  def updateInvalid() = {
+    this.valid.text = "Valid move? No, try again."
+    toTake = ""
+    center.contents(1) = this.valid
+    top.validate()
+    top.repaint()
+  }
+  def updateValid() = {
+    this.valid.text = "Valid move? Yes."
+    toTake = ""
+    center.contents(1) = this.valid
+    top.validate()
+    top.repaint()
+  }
+  def updateNoCard() = {
+    this.valid.text = "Valid move? Choose a card to play."
+    toTake = ""
+    center.contents(1) = this.valid
+    top.validate()
+    top.repaint()
+  }
 
 
+  var playersNro = "nothing"
 
-
-  var toTake = ""
-
-  this.listenTo(playerButton, startButton, confirmButton, clearButton, endButton, saveButton)
+  this.listenTo(playerButton, startButton, confirmButton, clearButton, endButton, saveButton, saveEndButton, playButton)
 
   this.reactions += {
     case clicked: ButtonClicked if (clicked.source == playerButton) => {
-      if (sourceField.text.toIntOption.isDefined) playersNro = sourceField.text //else error
-      game.playTurn("players " + playersNro)
+      if (sourceField.text.toIntOption.isDefined) {
+        if ((2 until 13).contains(sourceField.text.toInt)) {
+          playersNro = sourceField.text
+          game.playTurn("end")                                    // to clear the players and the table if a new number is give
+          game.playTurn("players " + playersNro)
+          outPut.text = playersNro + " players."
+        } else {
+          outPut.text = "Pleas write a number between 2 and 12."
+        }
+      } else {
+        outPut.text = "Pleas write a number between 2 and 12."
+      }
     }
     case clicked: ButtonClicked if (clicked.source == startButton) => {
       game.playTurn("start")
-      setUp()
-      window.contents = play
-      //println(playerPanels.map( _._1.name ))
-      //println(playerPanels.map( _._1.handCards ))
-      println(tablePanels)
-      println(tablePanels.map(_._1))
+      if (playersNro != "nothing") {
+        setUp()
+        window.contents = play
+        println(tablePanels)
+        println(tablePanels.map(_._1))
+      } else {
+        outPut.text = "Pleas give the number of players."
+      }
     }
     case clicked: ButtonClicked if (clicked.source == confirmButton) => {
       if (toTake.nonEmpty) {
         game.playTurn("take" + toTake.dropRight(1))
+        if (game.error) {
+          updateInvalid()
+        } else {
+          updateValid()
+        }
+        println(toTake)
       } else {
-        game.playTurn("place")
-        draw()
-        left.repaint()
-        println(playerPanels(1)._2)
-        println(game.table.cards)
-        println(game.currentPlayer.name)
+        if (game.currentPlayer.handCards.contains(game.currentPlayer.currentCard)) {
+          game.playTurn("place")
+          updateValid()
+        } else {
+          updateNoCard()
+        }
       }
+      println(game.deck.cards)
+      if (game.players.forall( _.handCards.isEmpty )) {
+        game.lastPlayer.addAtTheEnd(game.table.cards.toVector)
+        println("Total of bonuses: " + game.players.map( _.points ))
+        game.pointCount()
+        var pointString = ""
+        for(player <- game.players) {
+          pointString += player.name + ": " + player.points.toString + " points\n"
+        }
+        endOutPut.text = pointString + "\n\nThe winner is " + game.players.maxBy( _.points ).name
+        this.window.contents = end
+      } else {
+        draw()
+      }
+      println(game.table.cards)
       println(game.players.map( _.pileCards ))
       println(game.players.map( _.handCards ))
     }
     case clicked: ButtonClicked if (clicked.source == clearButton) => {
       toTake = ""
+      updateTake()
       println(toTake)
     }
     case MouseClicked(src, _, _, _, _) if (cardPanelPairs.exists(_._2 == src)) => {
       cardPanelPairs.find(_._2 == src) match {
-        case Some(pair) => game.playTurn("play " + pair._1.number.toString + pair._1.suit)
+        case Some(pair) => {
+          game.playTurn("play " + pair._1.number.toString + pair._1.suit)
+          updateCurrent()
+        }
         case None => //nothing
       }
       println(game.currentPlayer.name)
@@ -329,7 +486,10 @@ object GUI extends SimpleSwingApplication {
     }
     case MouseClicked(src, _, _, _, _) if (tablePanels.exists(_._2 == src)) => {
       tablePanels.find(_._2 == src) match {
-        case Some(pair) => toTake += " " + pair._1.number.toString + pair._1.suit + ","
+        case Some(pair) => {
+          toTake += " " + pair._1.number.toString + pair._1.suit + ","
+          updateTake()
+        }
         case None => //nothing
       }
       println(tablePanels.map(_._1))
@@ -345,11 +505,28 @@ object GUI extends SimpleSwingApplication {
     preferredSize = new Dimension(720, 800)
     maximumSize = new Dimension(720, 800)
 
-    contents = start
+    contents = end
 
   }
 
   def top = window
 
+
+  /*val allCards = for {
+      i <- cardPanels.indices
+      cardPanel <- cardPanels(i)
+    } yield cardPanel
+    allCards.foreach(n => this.listenTo(n.mouse.clicks))*/
+
+  /*
+          println("Total pile cards: " + game.players.map( _.pileCards.size).sum)
+        for(n <- 1 until 14) {
+          println("Total " + n.toString + ":" + game.players.map( _.pileCards.count(_.number == n) ).sum)
+        }
+        println("Total spades: " + game.players.map( _.pileCards.count(_.suit == "s") ).sum)
+        println("Total clubs: " + game.players.map( _.pileCards.count(_.suit == "c") ).sum)
+        println("Total hearts: " + game.players.map( _.pileCards.count(_.suit == "h") ).sum)
+        println("Total diamonds: " + game.players.map( _.pileCards.count(_.suit == "d") ).sum)
+   */
 
 }

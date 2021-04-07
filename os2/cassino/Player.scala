@@ -5,6 +5,7 @@ import scala.collection.mutable.Buffer
 class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffer[Card]) {
 
   var currentCard = Card(1, "s")   //Some?
+  var points = 0
 
   def playCard(card: Card) = currentCard = card
 
@@ -13,6 +14,8 @@ class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffe
   def addCard(card: Card) = this.handCards += card
 
   def addCards(cards: Vector[Card]) = this.handCards ++= cards
+
+  def addAtTheEnd(cards: Vector[Card]) = this.pileCards ++= cards
 
   def takeCards(cards: Vector[Card]) = {
     this.pileCards += currentCard
@@ -24,12 +27,15 @@ class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffe
 
   def check(playedCard: Card, wantedCards: Vector[Card]) = {
     var result = true
-    var wantedNumbers = wantedCards.map( _.number ).toBuffer
-    for (n <- wantedNumbers) {
+    val originalWantedNumbers = wantedCards.map( _.number ).toBuffer
+    var wantedNumbers = Buffer[Int]()
+    for (n <- originalWantedNumbers) {
       if (n > playedCard.handNumber) {
         result = false
-      } else if (n == playedCard.handNumber) {
-        wantedNumbers -= n
+      } else if (n < playedCard.handNumber && wantedCards.size == 1) {
+        result = false
+      } else if (n < playedCard.handNumber) {
+        wantedNumbers += n
       }
     }
 

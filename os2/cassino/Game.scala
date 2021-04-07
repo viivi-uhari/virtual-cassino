@@ -2,11 +2,15 @@ package os2.cassino
 
 import scala.collection.mutable.Buffer
 
-class Game(var players: Buffer[Player], val table: OwnTable, val deck: Deck) {
+class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
 
   var currentPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
+  var previousPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
+  var lastPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
 
   var cardsInGame = this.table.cards ++ deck.cards
+
+  var error = false
 
   def playTurn(command: String) = {
     val act = command.takeWhile( _ != ' ')
@@ -37,13 +41,19 @@ class Game(var players: Buffer[Player], val table: OwnTable, val deck: Deck) {
           this.currentPlayer.takeCards(cards.toVector)
           this.table.removeCards(cards.toVector)
           if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
+          if (this.table.cards.isEmpty) this.currentPlayer.points += 1
+          lastPlayer = currentPlayer
+          previousPlayer = currentPlayer
           turn()
-          // else feedback
+        } else {
+          this.error = true
         }
       }
       case "place" => { //place command just places the current card
         this.currentPlayer.placeCard(currentPlayer.currentCard)
         this.table.addCard(currentPlayer.currentCard)
+        if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
+        previousPlayer = currentPlayer
         turn()
       }
       case "end" => {
@@ -76,6 +86,18 @@ class Game(var players: Buffer[Player], val table: OwnTable, val deck: Deck) {
     if (currentIndex < players.size - 1) this.currentPlayer = this.players(currentIndex + 1) else this.currentPlayer = this.players.head
   }
 
+  def pointCount() = {
+
+    val mostCardsPlayer = this.players.maxBy( _.pileCards.size )
+    val mostSpadesPlayer = this.players.maxBy( _.pileCards.count( _.suit == "s" ) )
+    this.players.foreach( player => player.points += player.pileCards.count( _.number == 1 ) )
+    this.players.filter( _.pileCards.contains(Card(2, "s")) ).foreach( player => player.points += 1 )
+    this.players.filter( _.pileCards.contains(Card(10, "d")) ).foreach( player => player.points += 2 )
+
+    mostCardsPlayer.points += 1
+    mostSpadesPlayer.points += 2
+
+  }
 
 
 

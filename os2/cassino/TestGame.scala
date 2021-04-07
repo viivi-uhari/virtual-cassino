@@ -4,6 +4,7 @@ import scala.collection.mutable.Buffer
 
 object TestGame extends App {
 
+  /*
   val player1 = new Player("player1", Buffer(Card(2, "s"), Card(3, "d"), Card(5, "h")), Buffer[Card]())
   val player2 = new Player("player2", Buffer(Card(6, "s"), Card(11, "d"), Card(8, "h")), Buffer[Card]())
   val table = new OwnTable
@@ -85,6 +86,7 @@ object TestGame extends App {
   println("table cards: " + table.cards)
   println("players' names: " + game.players.map(_.name))
 
+  */
 
   /*
   val game2 = new os2.cassino.Game
@@ -125,6 +127,7 @@ object TestGame extends App {
 
   */
 
+  /*
 
   val table3 = new OwnTable
   val deck3 = new Deck
@@ -156,19 +159,22 @@ object TestGame extends App {
 
   //sorting the deck card to better see if the right cards are missing
   println("deck cards sorted: " + deck3.cards.sortBy(_.number))
+  */
 
 
-  /*
-  println("\n\nTesting the check method\n\n")
+  //println("\n\nTesting the check method\n\n")
 
-  println(player1.check(os2.cassino.Card(11, "s"), Vector(os2.cassino.Card(5, "c"), os2.cassino.Card(10, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(11, "c"), os2.cassino.Card(1, "s"))))
-  println(player1.check(os2.cassino.Card(12, "h"), Vector(os2.cassino.Card(11, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(5, "c"), os2.cassino.Card(1, "s"))))
+  //println(player1.check(os2.cassino.Card(11, "s"), Vector(os2.cassino.Card(8, "c"))))
+  //println(player1.check(os2.cassino.Card(11, "s"), Vector(os2.cassino.Card(11, "d"), os2.cassino.Card(11, "c"))))
+
+  /*println(player1.check(os2.cassino.Card(12, "h"), Vector(os2.cassino.Card(11, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(5, "c"), os2.cassino.Card(1, "s"))))
   println(player1.check(os2.cassino.Card(12, "h"), Vector(os2.cassino.Card(13, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(5, "c"), os2.cassino.Card(1, "s"))))
   println(player1.check(os2.cassino.Card(1, "h"), Vector(os2.cassino.Card(13, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(8, "c"), os2.cassino.Card(1, "s"))))
   println(player1.check(os2.cassino.Card(2, "s"), Vector(os2.cassino.Card(13, "h"), os2.cassino.Card(7, "d"), os2.cassino.Card(8, "c"), os2.cassino.Card(2, "s"))))
   println(player1.check(os2.cassino.Card(8, "s"), Vector(os2.cassino.Card(2, "h"), os2.cassino.Card(3, "d"), os2.cassino.Card(3, "c"), os2.cassino.Card(8, "s"))))
   println(player1.check(os2.cassino.Card(8, "s"), Vector(os2.cassino.Card(2, "h"), os2.cassino.Card(3, "d"), os2.cassino.Card(3, "c"), os2.cassino.Card(9, "s"))))
   */
+
 
 
 }
