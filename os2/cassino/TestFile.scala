@@ -6,11 +6,15 @@ import scala.reflect.internal.util.FileUtils.LineWriter
 
 object TestFile extends App {
 
+  var result = "Success, no errors"
 
+  val table = new OwnTable
+  val deck = new Deck
+  val game = new Game(Buffer[Player](), this.table, this.deck)
 
-  def load(sourceFile: String, game: Game): String = {
+    def load(sourceFile: String): Unit = {
 
-    var result = "Success, no errors"
+    result = "Success, no errors"
 
     try {
 
@@ -94,8 +98,8 @@ object TestFile extends App {
 
         if (players.isEmpty) {
           result = "Failure, no players"
-        //} else if (players.size == 1) {
-        //  result = "Failure, no opponents"
+        } else if (players.size == 1) {
+          result = "Failure, no opponents"
         } else if (turnMissing) {
           result = "Failure, no record of turn"
         }
@@ -112,9 +116,6 @@ object TestFile extends App {
           game.table = table
           game.deck = deck
           game.currentPlayer = currentPlayer
-          result
-        } else {
-          result
         }
 
       } finally {
@@ -122,85 +123,14 @@ object TestFile extends App {
         lineReader.close()
       }
     } catch {
-      case notFound: FileNotFoundException => {
-        result = "Failure, no file found"
-        result
-      }
-      case e: IOException => {
-        result = "Failure, IOException"
-        result
-      }
-    }
-  }
-
-  def save(fileName: String, game: Game): String = {
-
-    var result = "Success, no errors"
-
-    try {
-      val file = new File(fileName)
-      val writer = new FileWriter(file)
-      val bw = new BufferedWriter(writer)
-
-      try {
-        bw.write("CASSINO")
-        bw.write("\n")
-
-        val playerStrings = Buffer[String]()
-        for (i <- game.players.indices) {
-          val player = game.players(i)
-          val cardString = player.handCards.map( cardToString(_) ).mkString + ":" + player.pileCards.map( cardToString(_) ).mkString
-          playerStrings += "PLR" + (i + 1).toString + player.name.length + player.name + cardString
-        }
-        playerStrings.foreach( n => bw.write(n + "\n") )
-
-        val tableString = "TBL" + game.table.cards.map( cardToString(_) ).mkString
-        bw.write(tableString)
-        bw.write("\n")
-
-        var turnString = "TRN"
-        for (i <- game.players.indices) {
-          if (game.players(i) == game.currentPlayer) turnString += "plr" + (i + 1).toString
-        }
-        bw.write(turnString)
-        bw.write("\n")
-        bw.write("END")
-        result
-
-      } finally {
-        bw.close()
-        writer.close()
-      }
-    } catch {
-      case notFound: FileNotFoundException => {
-        result = "Failure, no file found"
-        result
-      }
-      case e: IOException => {
-        result = "Failure, IOException"
-        result
-      }
+      case notFound: FileNotFoundException => result = "Failure, no file found"
+      case e: IOException => result = "Failure, IOException"
     }
   }
 
 
-  def cardToString(card: Card): String = {
-    var number = ""
-    card.number match {
-      case 1 => number = "A"
-      case 11 => number = "J"
-      case 12 => number = "Q"
-      case 13 => number = "K"
-      case a: Int => number = a.toString
-    }
-    number + card.suit
-  }
 
-  val table = new OwnTable
-  val deck = new Deck
-  val game = new Game(Buffer[Player](), this.table, this.deck)
-
-  println(load("/Users/viiviuhari/IdeaProjects/OS2-Project/exampleFile.txt", game))
+  println(load("exampleFile.txt"))
   println(game.players.map(_.name))
   println(game.players.map(_.handCards))
   println(game.players.map(_.pileCards))
