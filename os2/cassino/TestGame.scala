@@ -175,6 +175,41 @@ object TestGame extends App {
   println(player1.check(os2.cassino.Card(8, "s"), Vector(os2.cassino.Card(2, "h"), os2.cassino.Card(3, "d"), os2.cassino.Card(3, "c"), os2.cassino.Card(9, "s"))))
   */
 
+  val player1 = new Player("player1", Buffer(Card(2, "s"), Card(3, "d"), Card(5, "h")), Buffer[Card]())
+  val comp1 = new Computer("Computer 1", Buffer(Card(9, "h"), Card(11, "d"), Card(13, "d"), Card(7, "s")), Buffer())
+  val table = new OwnTable
+  val deck = new Deck
+  table.cards = (Buffer(Card(10, "s"), Card(8, "s"), Card(5, "c"), Card(5, "d"), Card(1, "h"), Card(2, "h")))
+  deck.restack()
+  deck.removeCards((player1.handCards ++ comp1.handCards ++ table.cards).toVector)
+
+  val game = new Game(Buffer(player1, comp1), this.table, this.deck)
+  game.currentPlayer = comp1
+
+
+  println(player1.check(Card(8, "s"), Vector(Card(2, "s"), Card(6, "s"))))
+
+  comp1.tableCombinations(table.cards)
+  var combinations = comp1.combinations
+  var possibleCombinations = Buffer[(Card, Buffer[Card])]()
+  comp1.posCombinations()
+  comp1.evaluateTake(game.table.cards, game.cardsInGame, 2)
+  comp1.evaluatePlace(2)
+
+
+
+  println(comp1.combinations)
+  println(comp1.possibleCombinations)
+  println(comp1.takeEvaluations)
+  println(comp1.placeEvaluations)
+  println("deck cards: " + deck.cards)
+  println("table cards: " + table.cards)
+  println("player1 handcards: " + player1.handCards)
+  println("player1 pilecards: " + player1.pileCards)
+  println("comp1 handcards: " + comp1.handCards)
+  println("comp1 pilecards: " + comp1.pileCards)
+  println("players' names: " + game.players.map(_.name))
+  println("turn: " + game.currentPlayer.name)
 
 
 }

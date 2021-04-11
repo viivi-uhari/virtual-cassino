@@ -32,12 +32,11 @@ class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffe
     for (n <- originalWantedNumbers) {
       if (n > playedCard.handNumber) {
         result = false
-      } else if (n < playedCard.handNumber && wantedCards.size == 1) {
-        result = false
       } else if (n < playedCard.handNumber) {
         wantedNumbers += n
       }
     }
+    if ((wantedNumbers.size == 1) && (wantedNumbers.head != playedCard.handNumber)) result = false
 
     if (result) {
       var originalList = wantedNumbers
@@ -45,6 +44,7 @@ class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffe
         val sum = wantedNumbers.head + wantedNumbers(1)
         if (sum == playedCard.handNumber) {
           wantedNumbers --= wantedNumbers.take(2)
+          if (wantedNumbers.size == 1) result = false
           originalList = wantedNumbers
         } else if (sum < playedCard.handNumber) {
           if (wantedNumbers.size > 2) {

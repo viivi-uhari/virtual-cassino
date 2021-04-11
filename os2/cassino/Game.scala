@@ -25,6 +25,11 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
         }
         this.currentPlayer = players.head
       }
+      case "computers" => {
+        for (n <- 1 to subject.toInt) {
+          this.players += new Computer("Computer " + n.toString, Buffer[Card](), Buffer[Card]())
+        }
+      }
       case "start" => {
         this.deck.restack()
         this.deck.shuffle()
@@ -35,6 +40,7 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
       }
       case "play" => this.currentPlayer.playCard(subjectToCard(subject))
       case "take" => {
+        this.error = false
         val strings = subject.split(", ")
         val cards = for {
           string <- strings
@@ -66,6 +72,14 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
     }
   }
 
+  def playComputer(computer: Computer) = {
+    val cardsToTake = computer.evaluate(this.table.cards, this.cardsInGame, this.players.size)
+    if (cardsToTake.isEmpty) playTurn("place") else playTurn("take " + cardsToSubject(cardsToTake))
+    cardsToTake
+  }
+
+  def eraseComputers(computers: Int) = { this.players = this.players.dropRight(computers) }
+
   private def subjectToCard(subject: String) = {
     var card = this.currentPlayer.currentCard
     var second = subject(1)
@@ -84,7 +98,15 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
     card
   }
 
-  def cardToString(card: Card): String = {
+  def cardsToSubject(cards: Buffer[Card]): String = {
+    var string = ""
+    for (card <- cards) {
+      string += card.number.toString + card.suit + ", "
+    }
+    string.trim.dropRight(1)
+  }
+
+  private def cardToString(card: Card): String = {
     var number = ""
     card.number match {
       case 1 => number = "A"

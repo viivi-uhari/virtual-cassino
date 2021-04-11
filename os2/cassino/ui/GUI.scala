@@ -5,16 +5,13 @@ import os2.cassino._
 import java.awt.{Color, Font}
 import java.io.File
 import javax.imageio.ImageIO
-import javax.swing.SwingConstants
 import scala.collection.mutable.Buffer
-import scala.swing.BorderPanel.Position
-import scala.swing.FlowPanel.Alignment
 import scala.swing.event.{ButtonClicked, MouseClicked}
-import scala.swing.{BorderPanel, BoxPanel, Button, Component, Dialog, Dimension, Graphics2D, GridPanel, Image, Label, MainFrame, Orientation, Panel, SimpleSwingApplication, Swing, TextArea, TextField}
+import scala.swing.{BoxPanel, Button, Component, Dimension, Graphics2D, GridPanel, Image, Label, MainFrame, Orientation, Panel, SimpleSwingApplication, Swing, TextArea, TextField}
 
 object GUI extends SimpleSwingApplication {
 
-  //some constants
+  // some constants
   val cardWidth = 54
   val cardHeight = 90
   val cardFont = new Font("TimesRoman", Font.PLAIN, 30)
@@ -79,7 +76,7 @@ object GUI extends SimpleSwingApplication {
   // components for the end window
   val saveEndField = new TextField
   val saveEndButton = new Button("save")
-  val playButton = new Button("Play again")
+  val closeButton = new Button("close")   //or hopefully play again??
   val endOutPut = new TextArea("") {
     editable = false
   }
@@ -98,7 +95,7 @@ object GUI extends SimpleSwingApplication {
     contents += new Label("The file's name you want the game to be saved to:")
     contents += saveEndField
     contents += saveEndButton
-    contents += playButton
+    contents += closeButton
   }
 
   //components for the play window
@@ -177,6 +174,7 @@ object GUI extends SimpleSwingApplication {
   val game = new Game(Buffer[Player](), this.table, this.deck)
   var toTake = ""
   var playersNro = ""
+  var compNro = ""
 
   // methods that tell what is happening durig the game
   // who's turn it is
@@ -210,7 +208,7 @@ object GUI extends SimpleSwingApplication {
   }
 
   // updates the text that tells which cards are about to be taken
-  def takeText = {
+  def takeText(taken: String) = {
     val text = new Panel {
       minimumSize = new Dimension(200, 25)
       preferredSize = new Dimension(200, 25)
@@ -218,14 +216,14 @@ object GUI extends SimpleSwingApplication {
       override def paintComponent(g: Graphics2D) = {
         g.setFont(nameFont)
         g.setColor(black)
-        g.drawString("Taking: " + toTake, 0, 20)                           //card to take
+        g.drawString(taken, 0, 20)                           //card to take
       }
     }
     text
   }
 
   // updates the text that tells which card is about to be played
-  def currentText(currentText: String): Panel = {
+  def currentText(current: String): Panel = {
     val text = new Panel {
       minimumSize = new Dimension(200, 32)
       preferredSize = new Dimension(200, 32)
@@ -233,7 +231,7 @@ object GUI extends SimpleSwingApplication {
       override def paintComponent(g: Graphics2D) = {
         g.setFont(nameFont)
         g.setColor(black)
-        g.drawString("Playing: " + currentText, 0, 20)                   //current card
+        g.drawString(current, 0, 20)                   //current card
       }
     }
     text
@@ -311,6 +309,9 @@ object GUI extends SimpleSwingApplication {
   var previousPanel: (Buffer[Card], Buffer[Component]) = (Buffer(Card(1, "s")), Buffer(frontCard(Card(1, "s"))))
   var cardPanelPairs = currentPanel._1.zip(currentPanel._2)
   var cardPanelPairs2 = previousPanel._1.zip(previousPanel._2)
+  var compLabels = Buffer[Component]()
+  var compL = Buffer[(Player, Component)]()
+  var currentLabel = Buffer[(Player, Component)]()
 
   //at the start to set up
   def setUp() = {
@@ -354,8 +355,8 @@ object GUI extends SimpleSwingApplication {
     //setting up the center
     center.contents += turnText(this.game.currentPlayer)
     center.contents += updateText("")
-    center.contents += takeText
-    center.contents += currentText("")
+    center.contents += takeText("Taking: ")
+    center.contents += currentText("Playing: ")
     center.contents += tableCards
 
 
@@ -369,7 +370,7 @@ object GUI extends SimpleSwingApplication {
     }
 
     //matching the currentPlayer's cards with their swing components
-    playerPanels.clear()
+    //playerPanels.clear()
     for (i <- cardPanels.indices) {
       playerPanels += ((game.players(i), cardPanels(i)))
     }
@@ -379,10 +380,28 @@ object GUI extends SimpleSwingApplication {
       }
     }
     cardPanelPairs = currentPanel._1.zip(currentPanel._2)        //pairs of cards and their GUI components
-    currentPanel._2.foreach(n => this.listenTo(n.mouse.clicks))  //only needs to listen to the current cards
+    //only needs to listen to the current cards if it's an actual player
+    if (!game.currentPlayer.isInstanceOf[Computer]) currentPanel._2.foreach(n => this.listenTo(n.mouse.clicks))
 
     //getting the GUI to listen to the table's cards
     tableCards.contents.foreach(n => this.listenTo(n.mouse.clicks))
+
+
+    //finding all the computer opponents' labels
+    val rightComputerLabels = right.contents.map(_.asInstanceOf[BoxPanel].contents(1))
+    val leftComputerLabels = left.contents.map(_.asInstanceOf[BoxPanel].contents(1))
+    for (i <- rightComputerLabels.indices) {
+      compLabels = compLabels :+ rightComputerLabels(i)
+      if (i < leftComputerLabels.size) compLabels = compLabels :+ leftComputerLabels(i)
+    }
+    compLabels = compLabels.drop(playersNro.toInt)
+    //matching the computer opponents' with their labels
+    for (i <- compLabels.indices) {
+      compL += ((game.players(i + playersNro.toInt), compLabels(i)))
+    }
+    currentLabel = compL.filter( _._1 == game.currentPlayer )
+    currentLabel.foreach( n => this.listenTo(n._2.mouse.clicks) )
+
 
   }
 
@@ -417,7 +436,13 @@ object GUI extends SimpleSwingApplication {
       }
     }
     cardPanelPairs = currentPanel._1.zip(currentPanel._2)        //getting only the relevant pairs, filters away the "empty" cards
-    currentPanel._2.foreach(n => this.listenTo(n.mouse.clicks))  //only needs to listen to the current/relevant cards
+    //only needs to listen to the current cards if it's an actual player
+    if (!game.currentPlayer.isInstanceOf[Computer]) currentPanel._2.foreach(n => this.listenTo(n.mouse.clicks))
+
+    //updating the current labels
+    currentLabel = compL.filter( _._1 == game.currentPlayer )
+    currentLabel.foreach( n => this.listenTo(n._2.mouse.clicks) )
+    println(currentLabel.map( _._1.name ))
 
     //handling the table's cards
     tableCards.contents.clear()
@@ -440,8 +465,8 @@ object GUI extends SimpleSwingApplication {
     //setting up the center's elements
     center.contents(4) = turnText(this.game.currentPlayer)
     center.contents(5) = updateText("Valid move.")
-    center.contents(6) = takeText
-    center.contents(7) = currentText("")
+    center.contents(6) = takeText("Taking: ")
+    center.contents(7) = currentText("Playing: ")
     center.contents(8) = tableCards
 
     top.validate()
@@ -451,13 +476,13 @@ object GUI extends SimpleSwingApplication {
 
   // helper methods, updates the texts of the center of the game with the previous methods takeText, currentText and updateText
   def updateTake() = {
-    center.contents(6) = takeText
+    center.contents(6) = takeText("Taking: " + toTake)
     top.validate()
     top.repaint()
   }
   def updateCurrent() = {
     val card = numberString(this.game.currentPlayer.currentCard.number) + this.game.currentPlayer.currentCard.suit
-    center.contents(7) = currentText(card)
+    center.contents(7) = currentText("Playing: " + card)
     top.validate()
     top.repaint()
   }
@@ -476,11 +501,19 @@ object GUI extends SimpleSwingApplication {
   def updateSave() = {
     val fileName = saveField.text
     if (fileName.isEmpty) {
-      center.contents(5) = updateText("Please enter a valid name for the file.")
+      center.contents(5) = updateText("Enter a valid name for the file.")
     } else {
       game.save(fileName)
       if (game.result.takeWhile( _ != ',' ) == "Success") center.contents(5) = updateText("Game saved.") else center.contents(5) = updateText(game.result)
     }
+    top.validate()
+    top.repaint()
+  }
+  def updateComp(took: Buffer[Card]) = {
+    val card = numberString(this.game.previousPlayer.currentCard.number) + this.game.previousPlayer.currentCard.suit
+    toTake = ""
+    center.contents(6) = takeText("Took: " + game.cardsToSubject(took))
+    center.contents(7) = takeText("Played: " + card)
     top.validate()
     top.repaint()
   }
@@ -506,7 +539,7 @@ object GUI extends SimpleSwingApplication {
   }
 
   // listening to all the buttons
-  this.listenTo(playerButton, startButton, confirmButton, clearButton, endButton, saveButton, saveEndButton, playButton, loadButton)
+  this.listenTo(playerButton, compButton, startButton, confirmButton, clearButton, endButton, saveButton, saveEndButton, closeButton, loadButton)
 
   // all of the reactions
 
@@ -526,14 +559,28 @@ object GUI extends SimpleSwingApplication {
     }
     // giving a number for the players
     case clicked: ButtonClicked if (clicked.source == playerButton) => {
-      if (sourceField.text.toIntOption.isDefined && (2 until 13).contains(sourceField.text.toInt)) {
+      if (sourceField.text.toIntOption.isDefined && (2 to 12).contains(sourceField.text.toInt)) {
         playersNro = sourceField.text
         game.playTurn("end")                                       // to clear the players and the table if a new number is give
         game.playTurn("players " + playersNro)
         outPut.text = playersNro + " players."
       } else {
-        outPut.text = "Pleas write a number between 2 and 12."
+        outPut.text = "Pleas give a number between 2 and 12."
       }
+    }
+    // giving a number for the computer opponents
+    case clicked: ButtonClicked if (clicked.source == compButton) => {
+      if (sourceField.text.toIntOption.isEmpty) {
+        outPut.text = "Pleas give a number for the players first."
+      } else if (sourceField2.text.toIntOption.isDefined && (0 to (12 - playersNro.toInt)).contains(sourceField2.text.toInt)) {
+        if (compNro.nonEmpty) game.eraseComputers(compNro.toInt)  // to clear the computer opponents if a new number is give
+        compNro = sourceField2.text
+        game.playTurn("computers " + compNro)
+        outPut.text = compNro + " computer opponents."
+      } else {
+        outPut.text = "Pleas give a number between 0 and " + (12 - playersNro.toInt).toString + "."
+      }
+      println(game.players.map( _.name ))
     }
     // starting the game
     case clicked: ButtonClicked if (clicked.source == startButton) => {
@@ -573,11 +620,8 @@ object GUI extends SimpleSwingApplication {
     }
     case clicked: ButtonClicked if (clicked.source == saveButton) => updateSave()        // saving the game
     case clicked: ButtonClicked if (clicked.source == saveEndButton) => updateEndSave()  // saving the game at the end
-    // ending the game, not working
-    case clicked: ButtonClicked if (clicked.source == playButton || clicked.source == endButton) => {
-      game.playTurn("end")
-      this.window.contents = start
-    }
+    // ending the game, closing the GUI
+    case clicked: ButtonClicked if (clicked.source == closeButton || clicked.source == endButton) => this.window.closeOperation()
     // clicking on the player's cards
     case MouseClicked(src, _, _, _, _) if (cardPanelPairs.exists(_._2 == src)) => {
       cardPanelPairs.find(_._2 == src) match {
@@ -597,6 +641,18 @@ object GUI extends SimpleSwingApplication {
         }
         case None => //nothing
       }
+    }
+    // clicking on a computer opponent's Label
+    case MouseClicked(src, _, _, _, _) if (currentLabel.exists(_._2 == src)) => {
+      currentLabel.find(_._2 == src) match {
+        case Some(pair) => {
+          val took = game.playComputer(pair._1.asInstanceOf[Computer])
+          draw()
+          updateComp(took)
+        }
+        case None => //nothing
+      }
+      println(game.currentPlayer.name)
     }
   }
 
