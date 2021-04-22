@@ -2,20 +2,80 @@ package os2.cassino
 
 import java.io.{BufferedReader, BufferedWriter, File, FileNotFoundException, FileReader, FileWriter, IOException}
 import scala.collection.mutable.Buffer
+import scala.util.Random
 
 class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
 
   var currentPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
-  var previousPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
-  var lastPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
+  var previousPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())  //the player that played the previous turn
+  var lastPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())      //the player that was the last one to take cards off the table
 
-  var cardsInGame = this.table.cards ++ deck.cards
+  def cardsInGame = this.table.cards ++ deck.cards
+
+  def tableCards = this.table.cards
 
   var result = "Success, no errors"
 
   var error = false
 
-  def playTurn(command: String) = {
+  def addPlayers(number: Int) = {
+    for (n <- 1 to number) {
+      this.players += new Player("Player " + n.toString, Buffer[Card](), Buffer[Card]())
+    }
+  }
+
+  def addComputers(number: Int) = {
+    for (n <- 1 to number) {
+      this.players += new Computer("Computer " + n.toString, Buffer[Card](), Buffer[Card]())
+    }
+  }
+
+  def start() = {
+    this.deck.restack()
+    this.deck.shuffle()
+    for (player <- players) {
+      player.addCards(this.deck.dealCards.toVector)
+    }
+    table.addCards(this.deck.dealCards.toVector)
+    val i = Random.nextInt(this.players.size)
+    this.currentPlayer = this.players(i)
+  }
+
+  def play(card: Card) = this.currentPlayer.playCard(card)
+
+  def take(cards: Buffer[Card]) = {
+    this.error = false
+    if (this.currentPlayer.check(this.currentPlayer.currentCard, cards.toVector)) {
+      this.currentPlayer.takeCards(cards.toVector)
+      this.table.removeCards(cards.toVector)
+      if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
+      if (this.table.cards.isEmpty) this.currentPlayer.points += 1
+      lastPlayer = currentPlayer
+      previousPlayer = currentPlayer
+      turn()
+    } else {
+      this.error = true
+    }
+  }
+
+  def place() = {
+    println("inside place " + currentPlayer.name)
+    println(currentPlayer.currentCard)
+    println(table.cards)
+    this.currentPlayer.placeCard(currentPlayer.currentCard)
+    this.table.addCard(currentPlayer.currentCard)
+    if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
+    previousPlayer = currentPlayer
+    turn()
+  }
+
+  def end() = {
+    this.players.clear()
+    this.table.cards.clear()
+  }
+
+
+  /*def playTurn(command: String) = {
     val act = command.takeWhile( _ != ' ')
     val subject = command.dropWhile( _ != ' ').drop(1)
     act match {
@@ -70,11 +130,11 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
         this.table.cards = this.table.cards.empty
       }
     }
-  }
+  }*/
 
   def playComputer(computer: Computer) = {
-    val cardsToTake = computer.evaluate(this.table.cards, this.cardsInGame, this.players.size)
-    if (cardsToTake.isEmpty) playTurn("place") else playTurn("take " + cardsToSubject(cardsToTake))
+    val cardsToTake = computer.evaluate(tableCards, this.cardsInGame, this.players.size)
+    if (cardsToTake.isEmpty) this.place() else this.take(cardsToTake)
     cardsToTake
   }
 
@@ -98,15 +158,15 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
     card
   }
 
-  def cardsToSubject(cards: Buffer[Card]): String = {
+  /*def cardsToSubject(cards: Buffer[Card]): String = {
     var string = ""
     for (card <- cards) {
       string += card.number.toString + card.suit + ", "
     }
     string.trim.dropRight(1)
-  }
+  }*/
 
-  private def cardToString(card: Card): String = {
+  def cardToString(card: Card): String = {
     var number = ""
     card.number match {
       case 1 => number = "A"
@@ -136,9 +196,21 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
 
   }
 
+  def winners = {
+    var winners = Buffer[Player](this.players.head)
+    for (player <- this.players.tail) {
+      if (player.points > winners.head.points) {
+        winners = Buffer[Player](player)
+      } else if (player.points == winners.head.points) {
+        winners += player
+      }
+    }
+    winners
+  }
+
   def load(sourceFile: String): Unit = {
 
-    this.result = "Success, no errors"
+    this.result = "Success"
 
     try {
 
@@ -183,6 +255,7 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
         if (!(currentLine == "CASSINO")) this.result = "Failure, unknown file type"
 
         var players = Map[Int, Player]()
+        var computers = Map[Int, Player]()
         var table = new OwnTable
         var currentPlayer = new Player("", Buffer[Card](), Buffer[Card]())
         var turnMissing = true
@@ -204,6 +277,16 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
                 currentLine = lineReader.readLine()
               }
             }
+            case "CMP" => {
+              while (currentLine startsWith "CMP") {
+                val cmpNumber = currentLine(3).toString.toInt          //Option
+                val cards = currentLine.drop(4)
+                val handChars = cards.takeWhile(_ != ':')
+                val pileChars = cards.dropWhile(_ != ':').drop(1)
+                computers += cmpNumber -> new Computer("Computer " + cmpNumber, handleCards(handChars), handleCards(pileChars))
+                currentLine = lineReader.readLine()
+              }
+            }
             case "TBL" => {
               val cards = currentLine.drop(3)
               table.addCards(handleCards(cards).toVector)
@@ -212,7 +295,7 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
             case "TRN" => {
               val player = currentLine.slice(3, 6)
               val number = currentLine.slice(6, 7).toInt
-              if (player == "plr") currentPlayer = players(number)
+              if (player == "plr") currentPlayer = players(number) else currentPlayer = computers(number)
               currentLine = lineReader.readLine()
               turnMissing = false
             }
@@ -222,23 +305,23 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
 
         if (players.isEmpty) {
           this.result = "Failure, no players"
-        } else if (players.size == 1) {
+        } else if (players.size == 1 && computers.isEmpty) {
           this.result = "Failure, no opponents"
         } else if (turnMissing) {
           this.result = "Failure, no record of turn"
-        } else if (players.forall( _._2.handCards.isEmpty )) {
+        } else if (players.forall( _._2.handCards.isEmpty ) && computers.forall( _._2.handCards.isEmpty )) {
           this.result = "Failure, the game has already ended"
         }
 
-        if (result.takeWhile( _ != ',' ) == "Success") {
+        if (result == "Success") {
           val deck = new Deck
           deck.restack()
-          val allHandCrads = players.values.flatMap(_.handCards)
-          val allPileCrads = players.values.flatMap(_.pileCards)
+          val allHandCrads = players.values.flatMap(_.handCards) ++ computers.values.flatMap(_.handCards)
+          val allPileCrads = players.values.flatMap(_.pileCards) ++ computers.values.flatMap(_.pileCards)
           deck.removeCards(table.cards.toVector ++ allHandCrads ++ allPileCrads)
           deck.shuffle()
 
-          this.players = players.values.toBuffer
+          this.players = (players.values ++ computers.values).toBuffer
           this.table = table
           this.deck = deck
           this.currentPlayer = currentPlayer
@@ -256,7 +339,7 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
 
   def save(fileName: String): Unit = {
 
-    this.result = "Success, no errors"
+    this.result = "Success"
 
     try {
       val file = new File(fileName)
@@ -268,10 +351,12 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
         bw.write("\n")
 
         val playerStrings = Buffer[String]()
+        val playersNo = this.players.takeWhile( plr => !plr.isInstanceOf[Computer] ).size
         for (i <- this.players.indices) {
           val player = this.players(i)
           val cardString = player.handCards.map( cardToString(_) ).mkString + ":" + player.pileCards.map( cardToString(_) ).mkString
-          playerStrings += "PLR" + (i + 1).toString + player.name.length + player.name + cardString
+          val start = if (player.isInstanceOf[Computer]) "CMP" + (i + 1 - playersNo).toString else "PLR" + (i + 1).toString + player.name.length + player.name
+          playerStrings += start + cardString
         }
         playerStrings.foreach( n => bw.write(n + "\n") )
 
@@ -281,7 +366,9 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
 
         var turnString = "TRN"
         for (i <- this.players.indices) {
-          if (this.players(i) == this.currentPlayer) turnString += "plr" + (i + 1).toString
+          if (this.players(i) == this.currentPlayer) {
+            if (this.players(i).isInstanceOf[Computer]) turnString += "cmp" + (i + 1 - playersNo).toString else turnString += "plr" + (i + 1).toString
+          }
         }
         bw.write(turnString)
         bw.write("\n")

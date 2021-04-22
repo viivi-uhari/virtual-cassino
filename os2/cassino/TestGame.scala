@@ -176,32 +176,29 @@ object TestGame extends App {
   */
 
   val player1 = new Player("player1", Buffer(Card(2, "s"), Card(3, "d"), Card(5, "h")), Buffer[Card]())
-  val comp1 = new Computer("Computer 1", Buffer(Card(9, "h"), Card(11, "d"), Card(13, "d"), Card(7, "s")), Buffer())
+  val comp1 = new Computer("Computer 1", Buffer(Card(11, "c"), Card(9, "c"), Card(1, "h"), Card(10, "s")), Buffer())
   val table = new OwnTable
   val deck = new Deck
-  table.cards = (Buffer(Card(10, "s"), Card(8, "s"), Card(5, "c"), Card(5, "d"), Card(1, "h"), Card(2, "h")))
+  table.cards = (Buffer(Card(8, "s"), Card(8, "d")))
   deck.restack()
   deck.removeCards((player1.handCards ++ comp1.handCards ++ table.cards).toVector)
 
   val game = new Game(Buffer(player1, comp1), this.table, this.deck)
   game.currentPlayer = comp1
 
+  //println(comp1.helpWithOthers(game.table.cards, Card(9, "h"), 2))
+  //println(comp1.helpWithOthers(game.table.cards, Card(2, "d"), 2))
+  //println(comp1.helpWithOthers(game.table.cards, Card(3, "s"), 2))
+  //println(comp1.helpWithOthers(game.table.cards, Card(7, "s"), 2))
 
-  println(player1.check(Card(8, "s"), Vector(Card(2, "s"), Card(6, "s"))))
+  //val combinations = comp1.tableCombinations(game.table.cards)
+  //val possibleCombinations = comp1.posCombinations(combinations, comp1.handCards)
+  //println(possibleCombinations)
+  //println(table.cards)
+  //comp1.evaluate(game.table.cards, game.cardsInGame, 2)
+  //println(comp1.evaluateTake(possibleCombinations, game.table.cards, game.cardsInGame, 2))
 
-  comp1.tableCombinations(table.cards)
-  var combinations = comp1.combinations
-  var possibleCombinations = Buffer[(Card, Buffer[Card])]()
-  comp1.posCombinations()
-  comp1.evaluateTake(game.table.cards, game.cardsInGame, 2)
-  comp1.evaluatePlace(2)
-
-
-
-  println(comp1.combinations)
-  println(comp1.possibleCombinations)
-  println(comp1.takeEvaluations)
-  println(comp1.placeEvaluations)
+  comp1.evaluate(game.table.cards, game.cardsInGame, 2)
   println("deck cards: " + deck.cards)
   println("table cards: " + table.cards)
   println("player1 handcards: " + player1.handCards)
