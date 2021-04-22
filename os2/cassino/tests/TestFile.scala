@@ -1,8 +1,9 @@
-package os2.cassino
+package os2.cassino.tests
 
-import java.io.{BufferedReader, BufferedWriter, File, FileNotFoundException, FileReader, FileWriter, IOException, Reader}
+import os2.cassino._
+
+import java.io._
 import scala.collection.mutable.Buffer
-import scala.reflect.internal.util.FileUtils.LineWriter
 
 object TestFile extends App {
 
@@ -70,8 +71,8 @@ object TestFile extends App {
           currentLine.take(3) match {
             case "PLR" => {
               while (currentLine startsWith "PLR") {
-                val playerNumber = currentLine(3).toString.toInt        //Option
-                val nameSize = currentLine(4).toString.toInt            //Option
+                val playerNumber = currentLine(3).toString.toInt //Option
+                val nameSize = currentLine(4).toString.toInt //Option
                 val playerName = currentLine.slice(5, nameSize + 5)
                 val cards = currentLine.drop(5 + nameSize)
                 val handChars = cards.takeWhile(_ != ':')
@@ -83,7 +84,7 @@ object TestFile extends App {
             }
             case "CMP" => {
               while (currentLine startsWith "CMP") {
-                val cmpNumber = currentLine(3).toString.toInt          //Option
+                val cmpNumber = currentLine(3).toString.toInt //Option
                 val cards = currentLine.drop(4)
                 val handChars = cards.takeWhile(_ != ':')
                 val pileChars = cards.dropWhile(_ != ':').drop(1)
@@ -113,11 +114,11 @@ object TestFile extends App {
           this.result = "Failure, no opponents"
         } else if (turnMissing) {
           this.result = "Failure, no record of turn"
-        } else if (players.forall( _._2.handCards.isEmpty ) && computers.forall( _._2.handCards.isEmpty )) {
+        } else if (players.forall(_._2.handCards.isEmpty) && computers.forall(_._2.handCards.isEmpty)) {
           this.result = "Failure, the game has already ended"
         }
 
-        if (result.takeWhile( _ != ',' ) == "Success") {
+        if (result.takeWhile(_ != ',') == "Success") {
           val deck = new Deck
           deck.restack()
           val allHandCrads = players.values.flatMap(_.handCards) ++ computers.values.flatMap(_.handCards)
@@ -155,16 +156,16 @@ object TestFile extends App {
         bw.write("\n")
 
         val playerStrings = Buffer[String]()
-        val playersNo = game.players.takeWhile( plr => !plr.isInstanceOf[Computer] ).size
+        val playersNo = game.players.takeWhile(plr => !plr.isInstanceOf[Computer]).size
         for (i <- game.players.indices) {
           val player = game.players(i)
-          val cardString = player.handCards.map( game.cardToString(_) ).mkString + ":" + player.pileCards.map( game.cardToString(_) ).mkString
+          val cardString = player.handCards.map(game.cardToString(_)).mkString + ":" + player.pileCards.map(game.cardToString(_)).mkString
           val start = if (player.isInstanceOf[Computer]) "CMP" + (i + 1 - playersNo).toString else "PLR" + (i + 1).toString + player.name.length + player.name
           playerStrings += start + cardString
         }
-        playerStrings.foreach( n => bw.write(n + "\n") )
+        playerStrings.foreach(n => bw.write(n + "\n"))
 
-        val tableString = "TBL" + game.table.cards.map( game.cardToString(_) ).mkString
+        val tableString = "TBL" + game.table.cards.map(game.cardToString(_)).mkString
         bw.write(tableString)
         bw.write("\n")
 
@@ -187,7 +188,6 @@ object TestFile extends App {
       case e: IOException => this.result = "Failure, IOException"
     }
   }
-
 
 
   println(load("exampleFile.txt"))

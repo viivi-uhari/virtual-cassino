@@ -1,4 +1,6 @@
-package os2.cassino
+package os2.cassino.tests
+
+import os2.cassino._
 
 import scala.collection.mutable.Buffer
 
