@@ -11,12 +11,12 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
     if (possibleCombinations.isEmpty) {
       val placeEvaluations = evaluatePlace(combinations, players, cardsInGame, tableCards)
       val move = (placeEvaluations.maxBy( _._2 )._1, Buffer[Card]())
-      this.currentCard = move._1
+      playCard(move._1)
       move._2
     } else {
       val takeEvaluations = evaluateTake(possibleCombinations, tableCards, cardsInGame, players)
       val move = takeEvaluations.maxBy( _._2 )._1
-      this.currentCard = move._1
+      playCard(move._1)
       move._2
     }
   }
@@ -57,7 +57,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
     takeEvaluations
   }
 
-  def evaluateTakingCard(card: Card) = {
+  private def evaluateTakingCard(card: Card) = {
     var points = 0.0
     if (card == (Card(2, "s"))) points += 1
     if (card == (Card(10, "d"))) points += 2
@@ -66,14 +66,13 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
     points
   }
 
-  def sweepSub(tableCards: Buffer[Card], cardsInGame: Buffer[Card], players: Int): Double = {
+  private def sweepSub(tableCards: Buffer[Card], cardsInGame: Buffer[Card], players: Int): Double = {
     val sum = tableCards.map( _.number ).sum
     val possibleCards = cardsInGame.filter( _.number == sum )
     (possibleCards.size.toDouble / cardsInGame.size.toDouble) * (1.0 / players)
   }
 
   def evaluatePlace(combinations: Buffer[Buffer[Card]], players: Int, cardsInGame: Buffer[Card], tableCards: Buffer[Card]) = {
-    println(tableCards)
     var placeEvaluations = Map[Card, Double]()
     for (card <- handCards) {
       var points: Double = 0
@@ -82,14 +81,13 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
       if (card.number == 1) points -= 1
       if (card.suit == "s") points -= (1.0 / 13.0) * 2
       points += giveSpecialCards(combinations, card, players, cardsInGame)
-      points += helpWithOthers(tableCards, card, players) /// 2.0           //dividing by 2 decreases the weight of this aspect
-      placeEvaluations += card -> points                                    //when calculating which card should be placed,
-      println(tableCards)                                                   //the other aspects are more important
+      points += helpWithOthers(tableCards, card, players) / 2.0             //dividing by 2 decreases the weight of this aspect
+      placeEvaluations += card -> points                                    //when calculating which card should be placed, the other aspects are more important
     }
     placeEvaluations
   }
 
-  def giveSpecialCards(combinations: Buffer[Buffer[Card]], card: Card, players: Int, cardsInGame: Buffer[Card]): Double = {
+  private def giveSpecialCards(combinations: Buffer[Buffer[Card]], card: Card, players: Int, cardsInGame: Buffer[Card]): Double = {
     var minusPoints: Double = 0
     val aces = cardsInGame.filter( _.number == 1 )
     for (combination <- combinations) {
@@ -101,7 +99,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
     minusPoints * (1.0 / players)
   }
 
-  def helpWithOthers(tableCards: Buffer[Card], card: Card, players: Int) = {
+  private def helpWithOthers(tableCards: Buffer[Card], card: Card, players: Int) = {
     val newTableCards = tableCards :+ card
     val handCardsLeft = handCards.filter( _ != card)
     val newPossibles = posCombinations(tableCombinations(newTableCards), handCardsLeft)

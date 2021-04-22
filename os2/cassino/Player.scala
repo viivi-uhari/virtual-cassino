@@ -4,10 +4,16 @@ import scala.collection.mutable.Buffer
 
 class Player(var name: String, var handCards: Buffer[Card], var pileCards: Buffer[Card]) {
 
-  var currentCard = Card(1, "s")   //Some?
-  var points = 0
+  private var cardToBePlayed = Card(1, "s")   //Some?
+  private var points = 0
 
-  def playCard(card: Card) = currentCard = card
+  def addPoints(toBeAdded: Int) = this.points += toBeAdded
+
+  def tellPoints = this.points
+
+  def currentCard = this.cardToBePlayed
+
+  def playCard(card: Card) = this.cardToBePlayed = card
 
   def placeCard(card: Card) = this.handCards -= card
 

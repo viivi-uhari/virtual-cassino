@@ -6,17 +6,20 @@ import scala.util.Random
 
 class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
 
-  var currentPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())
-  var previousPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())  //the player that played the previous turn
-  var lastPlayer = new Player("replaceable", Buffer[Card](), Buffer[Card]())      //the player that was the last one to take cards off the table
+  var currentPlayer = new Player("", Buffer[Card](), Buffer[Card]())
+  var previousPlayer = new Player("", Buffer[Card](), Buffer[Card]())  //the player that played the previous turn
+  var lastPlayer = new Player("", Buffer[Card](), Buffer[Card]())      //the player that was the last one to take cards off the table
+
+  private var result = "Success"                                       //concerning the load and save methods
+  private var error = false                                            //concerning the check/take actions
 
   def cardsInGame = this.table.cards ++ deck.cards
 
   def tableCards = this.table.cards
 
-  var result = "Success, no errors"
+  def giveResult = this.result
 
-  var error = false
+  def giveError = this.error
 
   def addPlayers(number: Int) = {
     for (n <- 1 to number) {
@@ -49,7 +52,7 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
       this.currentPlayer.takeCards(cards.toVector)
       this.table.removeCards(cards.toVector)
       if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
-      if (this.table.cards.isEmpty) this.currentPlayer.points += 1
+      if (this.table.cards.isEmpty) this.currentPlayer.addPoints(1)
       lastPlayer = currentPlayer
       previousPlayer = currentPlayer
       turn()
@@ -69,68 +72,16 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
     turn()
   }
 
-  def end() = {
+  def clearAll() = {
     this.players.clear()
     this.table.cards.clear()
   }
 
-
-  /*def playTurn(command: String) = {
-    val act = command.takeWhile( _ != ' ')
-    val subject = command.dropWhile( _ != ' ').drop(1)
-    act match {
-      case "players" => {
-        for (n <- 1 to subject.toInt) {
-          this.players += new Player("Player " + n.toString, Buffer[Card](), Buffer[Card]())
-        }
-        this.currentPlayer = players.head
-      }
-      case "computers" => {
-        for (n <- 1 to subject.toInt) {
-          this.players += new Computer("Computer " + n.toString, Buffer[Card](), Buffer[Card]())
-        }
-      }
-      case "start" => {
-        this.deck.restack()
-        this.deck.shuffle()
-        for (player <- players) {
-          player.addCards(this.deck.dealCards.toVector)
-        }
-        table.addCards(this.deck.dealCards.toVector)
-      }
-      case "play" => this.currentPlayer.playCard(subjectToCard(subject))
-      case "take" => {
-        this.error = false
-        val strings = subject.split(", ")
-        val cards = for {
-          string <- strings
-        } yield subjectToCard(string)
-
-        if (this.currentPlayer.check(this.currentPlayer.currentCard, cards.toVector)) {
-          this.currentPlayer.takeCards(cards.toVector)
-          this.table.removeCards(cards.toVector)
-          if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
-          if (this.table.cards.isEmpty) this.currentPlayer.points += 1
-          lastPlayer = currentPlayer
-          previousPlayer = currentPlayer
-          turn()
-        } else {
-          this.error = true
-        }
-      }
-      case "place" => { //place command just places the current card
-        this.currentPlayer.placeCard(currentPlayer.currentCard)
-        this.table.addCard(currentPlayer.currentCard)
-        if (this.deck.cards.nonEmpty) this.currentPlayer.addCard(this.deck.removeCard)
-        previousPlayer = currentPlayer
-        turn()
-      }
-      case "end" => {
-        this.players = this.players.empty
-        this.table.cards = this.table.cards.empty
-      }
-    }
-  }*/
+  def end() = {
+    this.lastPlayer.addAtTheEnd(this.table.cards.toVector)
+    this.table.cards.clear()
+    this.pointCount()
+  }
 
   def playComputer(computer: Computer) = {
     val cardsToTake = computer.evaluate(tableCards, this.cardsInGame, this.players.size)
@@ -138,33 +89,7 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
     cardsToTake
   }
 
-  def eraseComputers(computers: Int) = { this.players = this.players.dropRight(computers) }
-
-  private def subjectToCard(subject: String) = {
-    var card = this.currentPlayer.currentCard
-    var second = subject(1)
-    val end = subject(subject.length - 1).toString
-    subject.head match {
-      case 'Q' => card = Card(12, end)
-      case 'K' => card = Card(13, end)
-      case 'J' => card = Card(11, end)
-      case 'A' => card = Card(1, end)
-      case '1' if (second == '0') => card = Card(10, end)
-      case '1' if (second == '1') => card = Card(11, end)
-      case '1' if (second == '2') => card = Card(12, end)
-      case '1' if (second == '3') => card = Card(13, end)
-      case a: Char => card = Card(a.toString.toInt, end)
-    }
-    card
-  }
-
-  /*def cardsToSubject(cards: Buffer[Card]): String = {
-    var string = ""
-    for (card <- cards) {
-      string += card.number.toString + card.suit + ", "
-    }
-    string.trim.dropRight(1)
-  }*/
+  def clearComputers(computers: Int) = { this.players = this.players.dropRight(computers) }
 
   def cardToString(card: Card): String = {
     var number = ""
@@ -183,25 +108,25 @@ class Game(var players: Buffer[Player], var table: OwnTable, var deck: Deck) {
     if (currentIndex < players.size - 1) this.currentPlayer = this.players(currentIndex + 1) else this.currentPlayer = this.players.head
   }
 
-  def pointCount() = {
+  private def pointCount() = {
 
     val mostCardsPlayer = this.players.maxBy( _.pileCards.size )
     val mostSpadesPlayer = this.players.maxBy( _.pileCards.count( _.suit == "s" ) )
-    this.players.foreach( player => player.points += player.pileCards.count( _.number == 1 ) )
-    this.players.filter( _.pileCards.contains(Card(2, "s")) ).foreach( player => player.points += 1 )
-    this.players.filter( _.pileCards.contains(Card(10, "d")) ).foreach( player => player.points += 2 )
+    this.players.foreach( player => player.addPoints(player.pileCards.count( _.number == 1 )) )
+    this.players.filter( _.pileCards.contains(Card(2, "s")) ).foreach( player => player.addPoints(1) )
+    this.players.filter( _.pileCards.contains(Card(10, "d")) ).foreach( player => player.addPoints(2) )
 
-    mostCardsPlayer.points += 1
-    mostSpadesPlayer.points += 2
+    mostCardsPlayer.addPoints(1)
+    mostSpadesPlayer.addPoints(2)
 
   }
 
   def winners = {
     var winners = Buffer[Player](this.players.head)
     for (player <- this.players.tail) {
-      if (player.points > winners.head.points) {
+      if (player.tellPoints > winners.head.tellPoints) {
         winners = Buffer[Player](player)
-      } else if (player.points == winners.head.points) {
+      } else if (player.tellPoints == winners.head.tellPoints) {
         winners += player
       }
     }

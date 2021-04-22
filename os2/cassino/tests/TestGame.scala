@@ -6,11 +6,11 @@ import scala.collection.mutable.Buffer
 
 object TestGame extends App {
 
-  /*
-  val player1 = new Player("player1", Buffer(Card(2, "s"), Card(3, "d"), Card(5, "h")), Buffer[Card]())
+
+  val player1 = new Player("Player 1", Buffer[Card](Card(1, "s"), Card(2, "d"), Card(10, "c"), Card(9, "c")), Buffer[Card]())
   val player2 = new Player("player2", Buffer(Card(6, "s"), Card(11, "d"), Card(8, "h")), Buffer[Card]())
   val table = new OwnTable
-  table.cards = (Buffer(Card(6, "c"), Card(5, "d"), Card(7, "h")))
+  table.cards = Buffer(Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c"))
   val deck = new Deck
   deck.restack()
   deck.removeCards((player1.handCards ++ player2.handCards ++ table.cards).toVector)
@@ -19,6 +19,7 @@ object TestGame extends App {
   val game = new Game(Buffer(player1, player2), this.table, this.deck)
   game.currentPlayer = player1
 
+  /*
 
   println("deck cards: " + deck.cards)
   println("table cards: " + table.cards)
@@ -164,10 +165,11 @@ object TestGame extends App {
   */
 
 
-  //println("\n\nTesting the check method\n\n")
+  println("\n\nTesting the check method\n\n")
 
-  //println(player1.check(os2.cassino.Card(11, "s"), Vector(os2.cassino.Card(8, "c"))))
-  //println(player1.check(os2.cassino.Card(11, "s"), Vector(os2.cassino.Card(11, "d"), os2.cassino.Card(11, "c"))))
+  println(player1.check(Card(11, "s"), Vector(Card(8, "c"))))
+  println(player1.check(Card(11, "s"), Vector(Card(11, "d"), Card(11, "c"))))
+  println(player1.check(Card(10, "s"), Vector(Card(10, "d"), Card(10, "s"))))
 
   /*println(player1.check(os2.cassino.Card(12, "h"), Vector(os2.cassino.Card(11, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(5, "c"), os2.cassino.Card(1, "s"))))
   println(player1.check(os2.cassino.Card(12, "h"), Vector(os2.cassino.Card(13, "h"), os2.cassino.Card(6, "d"), os2.cassino.Card(5, "c"), os2.cassino.Card(1, "s"))))
@@ -177,7 +179,7 @@ object TestGame extends App {
   println(player1.check(os2.cassino.Card(8, "s"), Vector(os2.cassino.Card(2, "h"), os2.cassino.Card(3, "d"), os2.cassino.Card(3, "c"), os2.cassino.Card(9, "s"))))
   */
 
-  val player1 = new Player("player1", Buffer(Card(2, "s"), Card(3, "d"), Card(5, "h")), Buffer[Card]())
+  /*val player1 = new Player("player1", Buffer(Card(2, "s"), Card(3, "d"), Card(5, "h")), Buffer[Card]())
   val comp1 = new Computer("Computer 1", Buffer(Card(11, "c"), Card(9, "c"), Card(1, "h"), Card(10, "s")), Buffer())
   val table = new OwnTable
   val deck = new Deck
@@ -209,6 +211,6 @@ object TestGame extends App {
   println("comp1 pilecards: " + comp1.pileCards)
   println("players' names: " + game.players.map(_.name))
   println("turn: " + game.currentPlayer.name)
-
+  */
 
 }

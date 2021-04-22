@@ -172,7 +172,6 @@ object GUI extends SimpleSwingApplication {
   val deck = new Deck
   val table = new OwnTable
   val game = new Game(Buffer[Player](), this.table, this.deck)
-  var toTake = ""
   var playersNro = ""
   var compNro = ""
   var toTakeBuffer = Buffer[Card]()
@@ -340,7 +339,6 @@ object GUI extends SimpleSwingApplication {
     }
 
     //handling the table's cards
-    //tablePanels.clear()
     var n = 0
     while(n < game.table.cards.size) {
         val cardComponent = frontCard(game.table.cards(n))
@@ -469,7 +467,6 @@ object GUI extends SimpleSwingApplication {
     center.contents(6) = takeText("Taking: ")
     center.contents(7) = currentText("Playing: ")
     center.contents(8) = tableCards
-    //toTake = ""
     toTakeBuffer.clear()
 
     top.validate()
@@ -479,29 +476,25 @@ object GUI extends SimpleSwingApplication {
 
   // helper methods, updates the texts of the center of the game with the previous methods takeText, currentText and updateText
   def updateTake() = {
-    //val nicerToTake = toTake.split(",").map( _.trim ).map( n => numberString(n.takeWhile( c => "1234567890".contains(c)).toInt) + n.last ).mkString(", ")
-    //center.contents(6) = takeText("Taking: " + nicerToTake)
     val cardString = toTakeBuffer.map( game.cardToString(_) ).mkString(", ")
     center.contents(6) = takeText("Taking: " + cardString)
     top.validate()
     top.repaint()
   }
   def updateCurrent() = {
-    //val card = numberString(this.game.currentPlayer.currentCard.number) + this.game.currentPlayer.currentCard.suit
     val card = game.cardToString(this.game.currentPlayer.currentCard)
     center.contents(7) = currentText("Playing: " + card)
     top.validate()
     top.repaint()
   }
   def updateInvalid() = {
-    //toTake = ""
     toTakeBuffer.clear()
     center.contents(5) = updateText("Invalid move.")
+    center.contents(6) = takeText("Taking: ")
     top.validate()
     top.repaint()
   }
   def updateNoCard() = {
-    //toTake = ""
     toTakeBuffer.clear()
     center.contents(5) = updateText("Choose a card to play.")
     top.validate()
@@ -513,14 +506,12 @@ object GUI extends SimpleSwingApplication {
       center.contents(5) = updateText("Enter a valid name for the file.")
     } else {
       game.save(fileName)
-      if (game.result == "Success") center.contents(5) = updateText("Game saved.") else center.contents(5) = updateText(game.result)
+      if (game.giveResult == "Success") center.contents(5) = updateText("Game saved.") else center.contents(5) = updateText(game.giveResult)
     }
     top.validate()
     top.repaint()
   }
   def updateComp(took: Buffer[Card]) = {
-    //val card = numberString(this.game.previousPlayer.currentCard.number) + this.game.previousPlayer.currentCard.suit
-    //toTake = ""
     val card = game.cardToString(this.game.previousPlayer.currentCard)
     toTakeBuffer.clear()
     val cardString = took.map( game.cardToString(_) ).mkString(", ")
@@ -535,22 +526,20 @@ object GUI extends SimpleSwingApplication {
     val fileName = saveEndField.text
     if (fileName.nonEmpty) {
       game.save(fileName)
-      if (game.result == "Success") feedback.text = "Game saved." else feedback.text = game.result
+      if (game.giveResult == "Success") feedback.text = "Game saved." else feedback.text = game.giveResult
     } else {
       feedback.text = "\nPlease enter a valid name for the file."
     }
   }
   def endSetUp() = {
-    game.lastPlayer.addAtTheEnd(game.table.cards.toVector)
-    game.pointCount()
+    game.end()
     var pointString = ""
     for(player <- game.players) {
-      pointString += player.name + ": " + player.points.toString + " points\n"
+      pointString += player.name + ": " + player.tellPoints.toString + " points\n"
     }
     var winnerString = ""
     if (game.winners.size == 1) winnerString = "\n\nThe winner is " else winnerString = "\n\nIt's a tie. The winners are "
     endOutPut.text = pointString + winnerString + game.winners.map( _.name ).mkString(", ")
-      //game.players.maxBy( _.points ).name  //what if a tie
   }
 
   // listening to all the buttons
@@ -565,8 +554,8 @@ object GUI extends SimpleSwingApplication {
         outPut.text = "Please enter a valid name for the file."
       } else {
         game.load(loadSourceField.text)
-        outPut.text = game.result
-        if (game.result.takeWhile( _ != ',' ) == "Success") {
+        outPut.text = game.giveResult
+        if (game.giveResult == "Success") {
           sourceField.editable = false
           sourceField2.editable = false
         }
@@ -576,9 +565,7 @@ object GUI extends SimpleSwingApplication {
     case clicked: ButtonClicked if (clicked.source == playerButton) => {
       if (sourceField.text.toIntOption.isDefined && (1 to 12).contains(sourceField.text.toInt)) {
         playersNro = sourceField.text
-        //game.playTurn("end")                                       // to clear the players and the table if a new number is give
-        //game.playTurn("players " + playersNro)
-        game.end()
+        game.clearAll()                                           // to clear the players and the table if a new number is give
         game.addPlayers(playersNro.toInt)
         outPut.text = playersNro + " players."
       } else {
@@ -591,7 +578,7 @@ object GUI extends SimpleSwingApplication {
         outPut.text = "Pleas give a number for the players first."
       } else if (sourceField2.text.toIntOption.isDefined && sourceField2.text.toIntOption != Some(1) && (0 to (12 - playersNro.toInt)).contains(sourceField2.text.toInt)
                  || sourceField2.text.toIntOption == Some(1) && (1 to (12 - playersNro.toInt)).contains(sourceField2.text.toInt)) {
-        if (compNro.nonEmpty) game.eraseComputers(compNro.toInt)  // to clear the computer opponents if a new number is give
+        if (compNro.nonEmpty) game.clearComputers(compNro.toInt)  // to clear the computer opponents if a new number is give
         compNro = sourceField2.text
         //game.playTurn("computers " + compNro)
         game.addComputers(compNro.toInt)
@@ -619,16 +606,11 @@ object GUI extends SimpleSwingApplication {
     }
     // registering the click of the confirm button
     case clicked: ButtonClicked if (clicked.source == confirmButton) => {
-      if (toTakeBuffer.nonEmpty) {                                                          // checking if the player doesn't want to take anything
-        //game.playTurn("take" + toTake.dropRight(1))
+      if (toTakeBuffer.nonEmpty) {                                                    // checking if the player doesn't want to take anything
         game.take(toTakeBuffer)
-        if (game.error) updateInvalid() else {
-          draw()
-          game.error = false                                                          // error tells if the move is valid
-        }
+        if (game.giveError) updateInvalid() else draw()                               // error tells if the move is valid
       } else {
         if (game.currentPlayer.handCards.contains(game.currentPlayer.currentCard)) {  // checking that the current player has a card from its hand
-          //game.playTurn("place")
           game.place()
           draw()
         } else {
@@ -642,7 +624,6 @@ object GUI extends SimpleSwingApplication {
     }
     // clearing the cards to take
     case clicked: ButtonClicked if (clicked.source == clearButton) => {
-      //toTake = ""
       toTakeBuffer.clear()
       updateTake()
     }
@@ -654,7 +635,6 @@ object GUI extends SimpleSwingApplication {
     case MouseClicked(src, _, _, _, _) if (cardPanelPairs.exists(_._2 == src)) => {
       cardPanelPairs.find(_._2 == src) match {
         case Some(pair) => {
-          //game.playTurn("play " + pair._1.number.toString + pair._1.suit)
           game.play(pair._1)
           updateCurrent()
         }
@@ -665,7 +645,6 @@ object GUI extends SimpleSwingApplication {
     case MouseClicked(src, _, _, _, _) if (tablePanels.exists(_._2 == src)) => {
       tablePanels.find(_._2 == src) match {
         case Some(pair) => {
-          //toTake += " " + pair._1.number.toString + pair._1.suit + ","
           toTakeBuffer += pair._1
           updateTake()
         }
