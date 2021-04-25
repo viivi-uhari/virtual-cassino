@@ -2,6 +2,7 @@ package os2.cassino
 
 case class Card(val number: Int, val suit: String) {
 
+  //used during the check method in the Player class
   def handNumber = {
     this match {
       case Card(1, s: String) => 14

@@ -1,8 +1,6 @@
 CASSINO
-PLR18Player 17sJh3dAd:2d2h9s9d
-PLR28Player 26h6d8c4s:5sAh4c
-PLR38Player 310d4hQd5d:
-CMP15c7c7d8h:
-TBL3h7h
+PLR18Player 110c7sJc3s:
+CMP1Kh8h10dAs:9s5d4s
+CMP29d5s2h6c
 TRNcmp1
 END

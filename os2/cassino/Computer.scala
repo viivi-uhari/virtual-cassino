@@ -5,22 +5,19 @@ import scala.collection.mutable.Buffer
 class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) extends Player(name, handCards, pileCards) {
 
 
+  //the final evaluate method that evaluates the best move by the maximum value of the different moves
+   //returns the cards to be taken, an empty buffer if a card is to be placed
   def evaluate(tableCards: Buffer[Card], cardsInGame: Buffer[Card], players: Int): Buffer[Card] = {
     val combinations = tableCombinations(tableCards)
     val possibleCombinations = posCombinations(combinations, handCards)
-    if (possibleCombinations.isEmpty) {
-      val placeEvaluations = evaluatePlace(combinations, players, cardsInGame, tableCards)
-      val move = (placeEvaluations.maxBy( _._2 )._1, Buffer[Card]())
-      playCard(move._1)
-      move._2
-    } else {
-      val takeEvaluations = evaluateTake(possibleCombinations, tableCards, cardsInGame, players)
-      val move = takeEvaluations.maxBy( _._2 )._1
-      playCard(move._1)
-      move._2
-    }
+    val placeEvaluations = evaluatePlace(combinations, players, cardsInGame, tableCards)
+    val takeEvaluations = evaluateTake(possibleCombinations, tableCards, cardsInGame, players)
+    val move = (placeEvaluations ++ takeEvaluations).maxBy( _._2)._1
+    playCard(move._1) //sets the best move's card to be one the opponent wants to play
+    move._2
   }
 
+  //all possible combinations of the table
   def tableCombinations(tableCards: Buffer[Card]) = {
     var combinations = Buffer[Buffer[Card]]()
     for (i <- 1 to tableCards.size) {
@@ -31,6 +28,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
     combinations
   }
 
+  //matching the opponents hand cards to combinations it can take of the table
   def posCombinations(combinations: Buffer[Buffer[Card]], cardsInHand: Buffer[Card]) = {
     var possibleCombinations = Buffer[(Card, Buffer[Card])]()
     for (card <- cardsInHand) {
@@ -41,53 +39,63 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
     possibleCombinations
   }
 
+  //evaluating the possible take moves
   def evaluateTake(possibleCombinations: Buffer[(Card, Buffer[Card])], tableCards: Buffer[Card], cardsInGame: Buffer[Card], players: Int) = {
     var takeEvaluations = Map[(Card, Buffer[Card]), Double]()
+    var leftOver = Buffer[Card]() ++ tableCards
     for (combination <- possibleCombinations) {
       var points: Double = 0
-      points += combination._2.size * (1.0 / 52.0)
-      points += combination._2.count( _.suit == "s" ) * (1.0 / 13.0) * 2
-      points += combination._2.count( _.number == 1 )
-      if (combination._2.contains(Card(2, "s"))) points += 1
-      if (combination._2.contains(Card(10, "d"))) points += 2
-      points += evaluateTakingCard(combination._1)
-      points -= sweepSub(tableCards, cardsInGame, players)
+      points += combination._2.size * (1.0 / 52.0)                         //equation 1 in the document (Algorithms: Computer Opponent)
+      points += combination._2.count( _.suit == "s" ) * (1.0 / 13.0) * 2   //equation 2
+      points += combination._2.count( _.number == 1 )                      //equation 3
+      if (combination._2.contains(Card(2, "s"))) points += 1               //equation 3
+      if (combination._2.contains(Card(10, "d"))) points += 2              //equation 3
+      points += evaluateTakingCard(combination._1)                         //evaluating individually the card that takes these cards
+      for (card <- combination._2) {
+        leftOver -= card
+      }
+      points -= sweepSub(leftOver, cardsInGame, players)                   //equation 4
       takeEvaluations += combination -> points
     }
     takeEvaluations
   }
 
+  //evaluating individually the card that takes cards off the table
   private def evaluateTakingCard(card: Card) = {
     var points = 0.0
-    if (card == (Card(2, "s"))) points += 1
-    if (card == (Card(10, "d"))) points += 2
-    if (card.number == 1) points += 1
-    if (card.suit == "s") points += (1.0 / 13.0) * 2
+    if (card == (Card(2, "s"))) points += 1            //equation 3
+    if (card == (Card(10, "d"))) points += 2           //equation 3
+    if (card.number == 1) points += 1                  //equation 3
+    if (card.suit == "s") points += (1.0 / 13.0) * 2   //equation 2
     points
   }
 
-  private def sweepSub(tableCards: Buffer[Card], cardsInGame: Buffer[Card], players: Int): Double = {
-    val sum = tableCards.map( _.number ).sum
+  //evaluating the possibility for a sweep and what it would mean in points
+  private def sweepSub(leftOver: Buffer[Card], cardsInGame: Buffer[Card], players: Int): Double = {
+    val sum = leftOver.map( _.number ).sum
     val possibleCards = cardsInGame.filter( _.number == sum )
-    (possibleCards.size.toDouble / cardsInGame.size.toDouble) * (1.0 / players)
+    (possibleCards.size.toDouble / cardsInGame.size.toDouble) * handCards.size * (1.0 / players)  //the right player has to have the right card
   }
 
+  //evaluating the possible place moves
   def evaluatePlace(combinations: Buffer[Buffer[Card]], players: Int, cardsInGame: Buffer[Card], tableCards: Buffer[Card]) = {
-    var placeEvaluations = Map[Card, Double]()
+    var placeEvaluations = Map[(Card, Buffer[Card]), Double]()
     for (card <- handCards) {
       var points: Double = 0
-      if (card == (Card(2, "s"))) points -= 1
-      if (card == (Card(10, "d"))) points -= 2
-      if (card.number == 1) points -= 1
-      if (card.suit == "s") points -= (1.0 / 13.0) * 2
-      points += giveSpecialCards(combinations, card, players, cardsInGame)
-      points += helpWithOthers(tableCards, card, players) / 2.0             //dividing by 2 decreases the weight of this aspect
-      placeEvaluations += card -> points                                    //when calculating which card should be placed, the other aspects are more important
+      if (card == (Card(2, "s"))) points -= 1                              //equation 5
+      if (card == (Card(10, "d"))) points -= 2                             //equation 5
+      if (card.number == 1) points -= 1                                    //equation 5
+      if (card.suit == "s") points -= (1.0 / 13.0) * 2                     //equation 6
+      points += giveSpecialCards(combinations, card, players, cardsInGame) //equation 7
+     // points -= card.number.toDouble * (0.0001)                            //equation 8
+      placeEvaluations += (card, Buffer[Card]()) -> points
     }
     placeEvaluations
   }
 
-  private def giveSpecialCards(combinations: Buffer[Buffer[Card]], card: Card, players: Int, cardsInGame: Buffer[Card]): Double = {
+  //evaluating if the placed card makes possible combinations for special cards with the rest of the table cards
+  //and if these special cards are still in the game.
+  def giveSpecialCards(combinations: Buffer[Buffer[Card]], card: Card, players: Int, cardsInGame: Buffer[Card]): Double = {
     var minusPoints: Double = 0
     val aces = cardsInGame.filter( _.number == 1 )
     for (combination <- combinations) {
@@ -96,25 +104,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
       if (sum == 15 && cardsInGame.contains(Card(2, "s"))) minusPoints -= 1
       if (sum == 16 && cardsInGame.contains(Card(10, "d"))) minusPoints -= 2
     }
-    minusPoints * (1.0 / players)
-  }
-
-  private def helpWithOthers(tableCards: Buffer[Card], card: Card, players: Int) = {
-    val newTableCards = tableCards :+ card
-    val handCardsLeft = handCards.filter( _ != card)
-    val newPossibles = posCombinations(tableCombinations(newTableCards), handCardsLeft)
-    var plusPoints: Double = 0
-    for (secondCard <- (handCardsLeft)) {                               //second card is the card to take on the next turn
-      val combinations = newPossibles.filter( _._1 == secondCard )          //combinations the second card can take
-      val cardCount = combinations.map( _._2.size ).sum * (1.0 / 52.0)
-      val spadeCount = combinations.map( comb => comb._2.count( card => card.suit == "s" ) ).sum * (1.0 / 13.0) * 2
-      val onePointCount = combinations.map( comb => comb._2.count( card => card.number == 1 || card == Card(2, "s") ) ).sum
-      val twoPointCount = combinations.map( comb => comb._2.count( card => card == Card(10, "d") ) ).sum * 2
-      plusPoints += (cardCount + spadeCount + onePointCount + twoPointCount) * (1.0 / players)
-      // all the possible points, lets divide with the players size
-      // because the chance of getting these current combinations decreases when the other players play
-    }
-    plusPoints
+    (minusPoints / cardsInGame.size.toDouble) * handCards.size * (1.0 / players)  //the next player would need to have the special card
   }
 
 }

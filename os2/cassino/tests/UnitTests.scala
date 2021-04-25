@@ -14,7 +14,7 @@ class UnitTests extends AnyFlatSpec with Matchers {
   val table = new OwnTable
   val deck = new Deck
 
-  table.cards = Buffer[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c"))
+  table.addCards(Buffer[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c")).toVector)
 
   deck.restack()
   deck.shuffle()
@@ -62,7 +62,7 @@ class UnitTests extends AnyFlatSpec with Matchers {
   game.deck.restack()
   game.deck.shuffle()
 
-  "comp1.evaluate" should "return the best move (ace)" in {
+  "comp1.evaluate" should "return the best move (ace, taking + special card)" in {
 
     comp1.handCards.clear()
     comp1.handCards ++= Buffer[Card](Card(1, "d"), Card(13, "d"), Card(8, "c"), Card(7, "c"))
@@ -77,13 +77,14 @@ class UnitTests extends AnyFlatSpec with Matchers {
 
   }
 
-  it should "return the best move (2s)" in {
+  it should "return the best move (2s, taking + special card)" in {
 
     game.deck.restack()
     game.deck.shuffle()
     comp1.handCards.clear()
     comp1.handCards ++= Buffer[Card](Card(2, "s"), Card(13, "d"), Card(8, "c"), Card(7, "c"))
     game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
+    game.cardsInGame --= game.table.cards
 
     val cardsToTake = comp1.evaluate(game.tableCards, game.cardsInGame, 2)
 
@@ -148,7 +149,9 @@ class UnitTests extends AnyFlatSpec with Matchers {
 
   }
 
-  "comp1.evaluatePlace" should "return the best card to place (not an ace, not giving the chance to take special cards)" in {
+  "comp1.evaluatePlace" should "return the best card to place (not an ace, not spades)" in {
+
+    //very little chance that the next player has the two of spades (4c + 11d)
 
     game.deck.restack()
     game.deck.shuffle()
@@ -156,10 +159,34 @@ class UnitTests extends AnyFlatSpec with Matchers {
     game.table.cards.clear()
     comp1.handCards ++= Buffer[Card](Card(1, "d"), Card(4, "c"), Card(12, "s"), Card(1, "h"))
     game.table.cards ++= Buffer[Card](Card(11, "d"), Card(13, "h"), Card(8, "d"), Card(5, "h"))
-    game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
+    game.deck.cards --= (player1.handCards ++ comp1.handCards ++ game.table.cards)
+    game.cardsInGame --= game.table.cards
 
     val placeEvaluations = comp1.evaluatePlace(comp1.tableCombinations(game.tableCards), 2, game.cardsInGame, game.tableCards)
-    val move = (placeEvaluations.maxBy( _._2 )._1, Buffer[Card]())
+    val move = placeEvaluations.maxBy( _._2 )._1
+    comp1.playCard(move._1)
+
+    println(placeEvaluations)
+    assert(comp1.currentCard != Card(1, "d"))
+    assert(comp1.currentCard != Card(1, "h"))
+    assert(comp1.currentCard != Card(12, "s"))
+
+  }
+
+  "comp1.evaluatePlace" should "return the best card to place (not an ace, not giving the chance for 2s)" in {
+
+    game.deck.restack()
+    game.deck.shuffle()
+    comp1.handCards.clear()
+    game.table.cards.clear()
+    comp1.handCards ++= Buffer[Card](Card(1, "d"), Card(4, "c"), Card(12, "s"), Card(1, "h"))
+    game.table.cards ++= Buffer[Card](Card(11, "d"), Card(13, "h"), Card(8, "d"), Card(5, "h"))
+    game.deck.cards --= (player1.handCards ++ comp1.handCards ++ game.table.cards)
+
+    val fakeCardsInGame = Buffer(Card(1, "s"), Card(2, "d"), Card(10, "c"), Card(9, "c"), Card(2, "s"))
+
+    val placeEvaluations = comp1.evaluatePlace(comp1.tableCombinations(game.tableCards), 2, fakeCardsInGame, game.tableCards)
+    val move = placeEvaluations.maxBy( _._2 )._1
     comp1.playCard(move._1)
 
     assert(comp1.currentCard != Card(1, "d"))
@@ -177,11 +204,13 @@ class UnitTests extends AnyFlatSpec with Matchers {
     comp1.handCards ++= Buffer[Card](Card(1, "d"), Card(12, "c"), Card(12, "s"), Card(1, "h"))
     game.table.cards ++= Buffer[Card](Card(11, "d"), Card(13, "h"), Card(8, "d"), Card(5, "h"))
     game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
+    game.cardsInGame --= game.table.cards
 
     val placeEvaluations = comp1.evaluatePlace(comp1.tableCombinations(game.tableCards), 2, game.cardsInGame, game.tableCards)
-    val move = (placeEvaluations.maxBy( _._2 )._1, Buffer[Card]())
-     comp1.playCard(move._1)
+    val move = placeEvaluations.maxBy( _._2 )._1
+    comp1.playCard(move._1)
 
+    println(placeEvaluations)
     assert(comp1.currentCard != Card(1, "d"))
     assert(comp1.currentCard != Card(1, "h"))
     assert(comp1.currentCard != Card(12, "s"))
@@ -197,54 +226,38 @@ class UnitTests extends AnyFlatSpec with Matchers {
     comp1.handCards ++= Buffer[Card](Card(2, "s"), Card(10, "h"), Card(3, "h"), Card(11, "d"))
     game.table.cards ++= Buffer[Card](Card(7, "h"))
     game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
+    game.cardsInGame --= game.table.cards
 
     val placeEvaluations = comp1.evaluatePlace(comp1.tableCombinations(game.tableCards), 2, game.cardsInGame, game.tableCards)
-    val move = (placeEvaluations.maxBy( _._2 )._1, Buffer[Card]())
-     comp1.playCard(move._1)
+    val move = placeEvaluations.maxBy( _._2 )._1
+    comp1.playCard(move._1)
 
+    println(placeEvaluations)
     assert(comp1.currentCard != Card(2, "s"))
-    assert(comp1.currentCard != Card(10, "h"))
+    assert(comp1.currentCard != Card(3, "h"))
     assert(comp1.currentCard != Card(11, "d"))
 
   }
 
-  it should "return the best card to place (keep spades even if a small card)" in {
+  it should "return the best card to place (a small card rather spades)" in {
 
     game.deck.restack()
     game.deck.shuffle()
     comp1.handCards.clear()
     game.table.cards.clear()
-    comp1.handCards ++= Buffer[Card](Card(2, "s"), Card(10, "h"), Card(3, "s"), Card(11, "d"))
+    comp1.handCards ++= Buffer[Card](Card(2, "s"), Card(13, "h"), Card(3, "s"), Card(11, "d"))
     game.table.cards ++= Buffer[Card](Card(7, "h"))
     game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
+    game.cardsInGame --= game.table.cards
 
     val placeEvaluations = comp1.evaluatePlace(comp1.tableCombinations(game.tableCards), 2, game.cardsInGame, game.tableCards)
-    val move = (placeEvaluations.maxBy( _._2 )._1, Buffer[Card]())
+    val move = placeEvaluations.maxBy( _._2 )._1
     comp1.playCard(move._1)
 
+    println(placeEvaluations)
     assert(comp1.currentCard != Card(2, "s"))
     assert(comp1.currentCard != Card(3, "s"))
     assert(comp1.currentCard != Card(11, "d"))
-
-  }
-
-  it should "return the best card to place (a small card rather than a big one, both spades)" in {
-
-    game.deck.restack()
-    game.deck.shuffle()
-    comp1.handCards.clear()
-    game.table.cards.clear()
-    comp1.handCards ++= Buffer[Card](Card(1, "c"), Card(7, "s"), Card(4, "s"), Card(11, "s"))
-    game.table.cards ++= Buffer[Card](Card(8, "d"))
-    game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
-
-    val placeEvaluations = comp1.evaluatePlace(comp1.tableCombinations(game.tableCards), 2, game.cardsInGame, game.tableCards)
-    val move = (placeEvaluations.maxBy( _._2 )._1, Buffer[Card]())
-    comp1.playCard(move._1)
-
-    assert(comp1.currentCard != Card(1, "c"))
-    assert(comp1.currentCard != Card(7, "s"))
-    assert(comp1.currentCard != Card(11, "s"))
 
   }
 
@@ -253,7 +266,7 @@ class UnitTests extends AnyFlatSpec with Matchers {
   "game.take" should "take the correct cards from the table, add them to player's pile and change the turn" in {
 
     game.table.cards.clear()
-    game.table.cards = Buffer[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c"))
+    game.table.cards ++= Buffer[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c"))
     game.deck.restack()
     game.deck.shuffle()
     game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
@@ -282,7 +295,7 @@ class UnitTests extends AnyFlatSpec with Matchers {
   "game.take" should "not change anything if the turn is invalid" in {
 
     game.table.cards.clear()
-    game.table.cards = Buffer[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c"))
+    game.table.cards ++= Buffer[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c"))
     game.deck.restack()
     game.deck.shuffle()
     player1.pileCards.clear()

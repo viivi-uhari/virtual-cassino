@@ -7,30 +7,36 @@ import scala.util.Random
 
 class Deck {
 
+  //represents the cards of the deck
   var cards = Buffer[Card]()
 
+  //removes a card from the deck when a player has played its turn
   def removeCard = {
     val removed = this.cards.head
     this.cards -= removed
     removed
   }
 
+  //shuffles the cards
   def shuffle() = {
     this.cards = Random.shuffle(this.cards)
   }
 
+  //removes multiple cards. used for example during the load method in the Game class
   def removeCards(cards: Vector[Card]) = {
     for (card <- cards) {
       this.cards -= card
     }
   }
 
+  //removes four cards to be dealt to a player or the table
   def dealCards = {
     val cards = this.cards.take(4)
     this.cards --= cards
     cards
   }
 
+  //adds 52 distinct cards
   def restack() = this.cards = Buffer(
     Card(1, "s"),
     Card(2, "s"),
