@@ -4,7 +4,7 @@ import java.io.{BufferedReader, BufferedWriter, File, FileNotFoundException, Fil
 import scala.collection.mutable.Buffer
 import scala.util.Random
 
-class Game(val players: Buffer[Player], val table: OwnTable, val deck: Deck) {
+class Game(var players: Buffer[Player], val table: OwnTable, val deck: Deck) {
 
   var currentPlayer = new Player("", Buffer[Card](), Buffer[Card]())   //the palyer whose turn it is
   var previousPlayer = new Player("", Buffer[Card](), Buffer[Card]())  //the player that played the previous turn
@@ -111,11 +111,10 @@ class Game(val players: Buffer[Player], val table: OwnTable, val deck: Deck) {
   }
 
   //method to clear the computer opponents if for example a new number for the opponents is given
-  def clearComputers(computers: Int) = {
-    this.players.clear()
-    val onlyPlayers = this.players.dropRight(computers)
-    this.players ++= onlyPlayers
-  }
+  def clearComputers(computers: Int) = this.players = this.players.takeWhile( !_.isInstanceOf[Computer] )
+
+  //gives the number of the human players in the game
+  def playerNro = this.players.takeWhile( !_.isInstanceOf[Computer] ).size
 
   //method used in pointCount and save, turns the card into its string form
   def cardToString(card: Card): String = {
@@ -354,7 +353,7 @@ class Game(val players: Buffer[Player], val table: OwnTable, val deck: Deck) {
           newDeck.shuffle()
 
           this.players.clear()
-          this.players ++= (newPlayers.values ++ computers.values).toBuffer
+          this.players = (newPlayers.values ++ computers.values).toBuffer
 
           this.table.cards.clear()
           this.table.cards ++= newTable.cards

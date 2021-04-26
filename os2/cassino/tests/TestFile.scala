@@ -7,6 +7,8 @@ import scala.collection.mutable.Buffer
 
 object TestFile extends App {
 
+  //tests the Game class's save and load methods
+
   val table = new OwnTable
   val deck = new Deck
   val game = new Game(Buffer[Player](), this.table, this.deck)

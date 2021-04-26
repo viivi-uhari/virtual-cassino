@@ -7,11 +7,14 @@ import scala.collection.mutable.Buffer
 object TestGame extends App {
 
 
+  //first testing the take, place and play methods of the Game class
+
   val player1 = new Player("Player 1", Buffer[Card](Card(1, "s"), Card(2, "d"), Card(10, "c"), Card(9, "c")), Buffer[Card]())
   val player2 = new Player("player2", Buffer(Card(6, "s"), Card(11, "d"), Card(8, "h")), Buffer[Card]())
-  val table = new OwnTable
-  table.cards ++= Buffer(Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c"))
   val deck = new Deck
+  val table = new OwnTable
+
+  table.addCards(Vector(Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c")))
   deck.restack()
   deck.removeCards((player1.handCards ++ player2.handCards ++ table.cards).toVector)
 
@@ -81,6 +84,8 @@ object TestGame extends App {
   println("turn: " + game.currentPlayer.name)
 
 
+  //then testing the end, start and addPlayers methods
+
   game.end()
 
   println("\n\nAfter ending the game\n\n")
@@ -122,7 +127,6 @@ object TestGame extends App {
   //sorting the deck card to better see if the right cards are missing
   println("deck cards sorted: " + game2.deck.cards.sortBy( _.number ))
 
-
   val table3 = new OwnTable
   val deck3 = new Deck
   val game3 = new Game(Buffer[Player](), this.table3, this.deck3)
@@ -154,6 +158,9 @@ object TestGame extends App {
   //sorting the deck card to better see if the right cards are missing
   println("deck cards sorted: " + deck3.cards.sortBy(_.number))
 
+
+  //then testing the check method of the Player class
+
   println("\n\nTesting the check method\n\n")
 
   println("should return false: ")
@@ -181,21 +188,26 @@ object TestGame extends App {
   println(player1.check(Card(11, "s"), Vector(Card(10, "h"), Card(11, "d"))))
 
 
+  //then testing the computer opponent's methods
+
   println("\n\nTesting the Computer opponent\n\n")
 
   val player = new Player("player 1", Buffer(Card(2, "s"), Card(3, "d"), Card(5, "h")), Buffer[Card]())
   val comp = new Computer("Computer 1", Buffer(Card(11, "c"), Card(9, "c"), Card(1, "h"), Card(10, "s")), Buffer())
   val table4 = new OwnTable
   val deck4 = new Deck
-  table4.cards ++= (Buffer(Card(8, "s"), Card(8, "d")))
+
+  table4.addCards(Vector(Card(8, "s"), Card(8, "d")))
   deck4.restack()
   deck4.removeCards((player.handCards ++ comp.handCards ++ table4.cards).toVector)
+
   val game4 = new Game(Buffer(player, comp), this.table4, this.deck4)
   game4.currentPlayer = comp
   game4.cardsInGame --= game4.table.cards
 
   val combinations = comp.tableCombinations(game4.table.cards)
   val possibleCombinations = comp.posCombinations(combinations, comp.handCards)
+
   println("\nPossible combinations:\n")
   println(possibleCombinations)
   println("\nComputer evaluateTake method:\n")
@@ -216,7 +228,7 @@ object TestGame extends App {
   println("players' names: " + game4.players.map(_.name))
   println("turn: " + game4.currentPlayer.name)
 
-  //testing the point count
+  //testing the pointCount methdo of the Game class
   println("\n\nTesting the pointcount string\n\n")
 
   val player5 = new Player("Player 5", Buffer[Card](), Buffer(Card(2, "s"), Card(1, "d"), Card(1, "h"), Card(3, "d"), Card(5, "h")))

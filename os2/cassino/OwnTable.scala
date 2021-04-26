@@ -5,9 +5,7 @@ import scala.collection.mutable.Buffer
 class OwnTable {
 
   //represents the table's cards
-  private var currentCards = Buffer[Card]()
-
-  def cards = currentCards
+  var cards = Buffer[Card]()
 
   //when placing a card on the table, a card is added
   def addCard(card: Card) = this.cards += card

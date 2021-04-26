@@ -74,7 +74,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
   private def sweepSub(leftOver: Buffer[Card], cardsInGame: Buffer[Card], players: Int): Double = {
     val sum = leftOver.map( _.number ).sum
     val possibleCards = cardsInGame.filter( _.number == sum )
-    (possibleCards.size.toDouble / cardsInGame.size.toDouble) * handCards.size * (1.0 / players)  //the right player has to have the right card
+    (possibleCards.size.toDouble / cardsInGame.size.toDouble) * handCards.size  //the right player has to have the right card
   }
 
   //evaluating the possible place moves
@@ -87,7 +87,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
       if (card.number == 1) points -= 1                                    //equation 5
       if (card.suit == "s") points -= (1.0 / 13.0) * 2                     //equation 6
       points += giveSpecialCards(combinations, card, players, cardsInGame) //equation 7
-     // points -= card.number.toDouble * (0.0001)                            //equation 8
+      points -= card.number.toDouble * (0.0001)                            //equation 8
       placeEvaluations += (card, Buffer[Card]()) -> points
     }
     placeEvaluations
@@ -95,7 +95,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
 
   //evaluating if the placed card makes possible combinations for special cards with the rest of the table cards
   //and if these special cards are still in the game.
-  def giveSpecialCards(combinations: Buffer[Buffer[Card]], card: Card, players: Int, cardsInGame: Buffer[Card]): Double = {
+  private def giveSpecialCards(combinations: Buffer[Buffer[Card]], card: Card, players: Int, cardsInGame: Buffer[Card]): Double = {
     var minusPoints: Double = 0
     val aces = cardsInGame.filter( _.number == 1 )
     for (combination <- combinations) {
@@ -104,7 +104,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
       if (sum == 15 && cardsInGame.contains(Card(2, "s"))) minusPoints -= 1
       if (sum == 16 && cardsInGame.contains(Card(10, "d"))) minusPoints -= 2
     }
-    (minusPoints / cardsInGame.size.toDouble) * handCards.size * (1.0 / players)  //the next player would need to have the special card
+    (minusPoints / cardsInGame.size.toDouble) * handCards.size  //the next player would need to have the special card
   }
 
 }

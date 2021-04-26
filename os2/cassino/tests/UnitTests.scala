@@ -14,14 +14,14 @@ class UnitTests extends AnyFlatSpec with Matchers {
   val table = new OwnTable
   val deck = new Deck
 
-  table.addCards(Buffer[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c")).toVector)
-
+  table.addCards(Vector[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c")))
   deck.restack()
   deck.shuffle()
-
-  deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
+  deck.removeCards((player1.handCards ++ comp1.handCards ++ table.cards).toVector)
 
   val game = new Game(Buffer(player1, comp1), table, deck)
+
+  //testing the check method
 
   "player1.check" should "check the cards correctly (ace and normal cards)" in {
 
@@ -57,7 +57,7 @@ class UnitTests extends AnyFlatSpec with Matchers {
 
   }
 
-  //checking the computer opponents evaluation
+  //checking the computer opponent's evaluation
 
   game.deck.restack()
   game.deck.shuffle()
@@ -149,6 +149,8 @@ class UnitTests extends AnyFlatSpec with Matchers {
 
   }
 
+  //testing the place evaluations of the computer opponent
+
   "comp1.evaluatePlace" should "return the best card to place (not an ace, not spades)" in {
 
     //very little chance that the next player has the two of spades (4c + 11d)
@@ -173,7 +175,7 @@ class UnitTests extends AnyFlatSpec with Matchers {
 
   }
 
-  "comp1.evaluatePlace" should "return the best card to place (not an ace, not giving the chance for 2s)" in {
+  it should "return the best card to place (not an ace, not giving the chance for 2s)" in {
 
     game.deck.restack()
     game.deck.shuffle()
@@ -217,7 +219,7 @@ class UnitTests extends AnyFlatSpec with Matchers {
 
   }
 
-  it should "return the best card to place (a small card rather than a big one)" in {
+  it should "return the best card to place (a small card rather than a big one, 3h vs 10h and 11d)" in {
 
     game.deck.restack()
     game.deck.shuffle()
@@ -234,12 +236,12 @@ class UnitTests extends AnyFlatSpec with Matchers {
 
     println(placeEvaluations)
     assert(comp1.currentCard != Card(2, "s"))
-    assert(comp1.currentCard != Card(3, "h"))
+    assert(comp1.currentCard != Card(10, "h"))
     assert(comp1.currentCard != Card(11, "d"))
 
   }
 
-  it should "return the best card to place (a small card rather spades)" in {
+  it should "return the best card to place (a bigger card rather than spades, 3s vs 11d)" in {
 
     game.deck.restack()
     game.deck.shuffle()
@@ -257,11 +259,57 @@ class UnitTests extends AnyFlatSpec with Matchers {
     println(placeEvaluations)
     assert(comp1.currentCard != Card(2, "s"))
     assert(comp1.currentCard != Card(3, "s"))
-    assert(comp1.currentCard != Card(11, "d"))
+    assert(comp1.currentCard != Card(13, "h"))
 
   }
 
-  //cheking the game's methods
+  it should "return the best card to place (the one that gives the worst chance for special cards)" in {
+
+    game.deck.restack()
+    game.deck.shuffle()
+    comp1.handCards.clear()
+    game.table.cards.clear()
+    comp1.handCards ++= Buffer[Card](Card(8, "h"), Card(4, "d"), Card(1, "s"), Card(6, "c"))
+    game.table.cards ++= Buffer[Card](Card(7, "c"), Card(10, "h"), Card(12, "c"))
+    game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
+    game.cardsInGame --= game.table.cards
+
+    val placeEvaluations = comp1.evaluatePlace(comp1.tableCombinations(game.tableCards), 2, game.cardsInGame, game.tableCards)
+    val move = placeEvaluations.maxBy( _._2 )._1
+    comp1.playCard(move._1)
+
+    println(placeEvaluations)
+    assert(comp1.currentCard != Card(4, "c"))
+    assert(comp1.currentCard != Card(1, "s"))
+    assert(comp1.currentCard != Card(6, "c"))
+
+  }
+
+  it should "return the best card to place (the one that gives the least chances for special cards, not spades)" in {
+
+    //a small chance for the next one to have 10d, better to save spades
+
+    game.deck.restack()
+    game.deck.shuffle()
+    comp1.handCards.clear()
+    game.table.cards.clear()
+    comp1.handCards ++= Buffer[Card](Card(8, "s"), Card(4, "d"), Card(1, "s"), Card(6, "c"))
+    game.table.cards ++= Buffer[Card](Card(7, "c"), Card(10, "h"), Card(12, "c"))
+    game.deck.cards --= (player1.handCards ++ comp1.handCards ++ table.cards)
+    game.cardsInGame --= game.table.cards
+
+    val placeEvaluations = comp1.evaluatePlace(comp1.tableCombinations(game.tableCards), 2, game.cardsInGame, game.tableCards)
+    val move = placeEvaluations.maxBy( _._2 )._1
+    comp1.playCard(move._1)
+
+    println(placeEvaluations)
+    assert(comp1.currentCard != Card(4, "c"))
+    assert(comp1.currentCard != Card(1, "s"))
+    assert(comp1.currentCard != Card(8, "s"))
+
+  }
+
+  //cheking the game's take method
 
   "game.take" should "take the correct cards from the table, add them to player's pile and change the turn" in {
 
@@ -292,7 +340,7 @@ class UnitTests extends AnyFlatSpec with Matchers {
 
   }
 
-  "game.take" should "not change anything if the turn is invalid" in {
+  it should "not change anything if the turn is invalid" in {
 
     game.table.cards.clear()
     game.table.cards ++= Buffer[Card](Card(4, "s"), Card(3, "d"), Card(6, "c"), Card(5, "c"))
