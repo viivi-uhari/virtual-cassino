@@ -93,7 +93,7 @@ class Computer(name: String, handCards: Buffer[Card], pileCards: Buffer[Card]) e
     placeEvaluations
   }
 
-  //evaluating if the placed card makes possible combinations for special cards with the rest of the table cards
+  //evaluating if the placed cards makes possible combinations for special cards with the rest of the table cards
   //and if these special cards are still in the game.
   private def giveSpecialCards(combinations: Buffer[Buffer[Card]], card: Card, players: Int, cardsInGame: Buffer[Card]): Double = {
     var minusPoints: Double = 0

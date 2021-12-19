@@ -311,7 +311,7 @@ class Game(var players: Buffer[Player], val table: OwnTable, val deck: Deck) {
                     newCurrentPlayer = newPlayers(n)
                     turnMissing = false
                   } else if (player == "cmp" && computers.keys.toVector.contains(n)) {
-                    newCurrentPlayer = newPlayers(n)
+                    newCurrentPlayer = computers(n)
                     turnMissing = false
                   }
                 }
