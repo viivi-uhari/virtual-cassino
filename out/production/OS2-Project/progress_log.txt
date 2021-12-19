@@ -1,0 +1,26 @@
+Report 1
+3.-17.3.:
+
+I have implemented the classes Player, Table, Card and Deck almost entirely. The method for changing a Player's name is still missing.
+I have also started the implementation of the Game class. The most significant commands are being handled in the playTurn method.
+I have also implemented the check method and tested the classes mentioned in the class TestGame with commands of the correct format.
+I have also started the implementation of the load method in its own TestFile class for now. I wanted to start working on the user interface
+a bit earlier before the file handling methods but I had some trouble getting the Scala Swing library working. Now it's working and I've been testing it out.
+All in all I've used about 12 hours so far on my project.
+
+Report 2
+18.-31.3.:
+
+Now I have started the implementation of my GUI and done some finetuning to the Game class. For example I implemented a
+command handling method subjectToCard that turns the card-strings into Cards. The GUI is coming along nicely and
+I'm hoping to get it working during the next two weeks. I'd also like to get the file handling methods working during the next two weeks.
+My plan has changed a little from the initial one and now I'm trying to get the GUI class working before starting on the computer opponent.
+
+Report 3
+1.-14.4.:
+
+Now my GUI is working and I have also built the computer opponent and it is working with the GUI and the rest of the game.
+I've implemented the save and load methods so that they work with just regular players being in the game, but the handling of computer opponents
+are yet to be done. The computer opponent evaluates its turns well, but it could still be improved. I seem to be on schedule and in addition to
+improving the computer opponent and the save and load methods, I wish to do some last minute touches to my code and search for bugs
+probably with unit testing.
